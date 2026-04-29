@@ -1,0 +1,740 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+<style type="text/css">
+    .contenedor-borde{
+        border:1px solid #0067c6;
+        padding: 20px;
+        margin:20px;
+        border-radius:5px;
+    }
+    .titulo-borde{
+        padding: 0 10px;
+        font-weight: bold;
+        color:#333;
+        background-color: white;
+        width: auto;
+    }
+    #datSeries {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datSeries .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+    }
+
+    .card-articulo {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .header-articulo {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        color: white;
+        padding: 20px;
+    }
+
+    .header-articulo h3 {
+        margin: 0;
+    }
+
+    .info-item {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f1f1f1;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .label {
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    .value {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #212529;
+    }
+
+    .badge-custom {
+        font-size: 0.9rem;
+        padding: 6px 10px;
+        border-radius: 20px;
+    }
+
+    .precio {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .footer-actions {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: right;
+    }
+
+    .almacen-card {
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: #ffffff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.2s ease;
+    }
+
+    .almacen-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+
+    .codigo {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .nombre {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .existencia {
+        font-size: 1.4rem;
+        font-weight: bold;
+    }
+
+    .badge-stock {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+</style>
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h3 class="font-weight-bold text-dark mb-0"><i class="fas fa-cube mr-2"></i> <%=articulo.codigo%> </h3>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Almacén</a></li>
+                        <li class="breadcrumb-item"><a href="/almacen/articulos">Articulos</a></li>
+                        <li class="breadcrumb-item active">Datos</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#editarArticulo">
+                    Editar
+                </button> 
+                <% if(articulo.tipo=="EQUIPO"){%>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#crearMovimientoSerie">
+                        Nuevo Movimiento
+                    </button> 
+                    <button type="button" class="btn btn-info" onclick="obtenerSeries(<%=articulo.id%>)">
+                        Series
+                    </button> 
+                <% }else{ %>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#crearMovimiento">
+                        Nuevo Movimiento
+                    </button> 
+                <%} %>
+                <a class="btn btn-primary" href="/almacen/articulos/movimientos/<%=articulo.id%>">Ver movimientos</a>
+            </div>
+            <!-- /.card-header -->
+            <!-- /.card-header -->
+            <div class="card-body p-2">
+                <fieldset class="contenedor-borde">
+                    <legend class="titulo-borde">Datos*</legend>
+                    <div class="row">
+                    <!-- Columna izquierda -->
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <div class="label">Clave alterna</div>
+                            <div class="value"><%=articulo.clavealterna%></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Descripción</div>
+                            <div class="value"><%=articulo.descripcion%></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Marca</div>
+                            <div class="value"><%=articulo.marca%></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Modelo</div>
+                            <div class="value"><%=articulo.modelo%></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Tipo</div>
+                            <div class="value">
+                                <span class="badge badge-primary badge-custom"><%=articulo.tipo%></span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Garantía</div>
+                            <div class="value"><%=articulo.garantia%> meses</div>
+                        </div>
+                        <% if(articulo.tipo=="EQUIPO"){ %>
+                            <div class="info-item">
+                                <div class="label">Tamaño</div>
+                                <div class="value"><%=articulo.tamano%></div>
+                            </div>
+                            <div class="info-item">
+                                <div class="label">Color o Monocromo</div>
+                                <div class="value"><%=articulo.tipocolor%></div>
+                            </div>
+                        <% } %>
+                    </div>
+                    <!-- Columna derecha -->
+                    <div class="col-md-6">
+                        <div class="info-item text-center">
+                            <div class="label">Precio Público</div>
+                            <div class="precio">
+                                <%=
+                                    new Intl.NumberFormat('es-MX', {
+                                        style: 'currency',
+                                        currency: 'MXN'
+                                    }).format(articulo.preciopublico); 
+                                %>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Rendimiento</div>
+                            <div class="value">
+                                <%= 
+                                    new Intl.NumberFormat('es-MX', {
+                                        style: 'decimal',
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 0
+                                    }).format(articulo.rendimiento) 
+                                %>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Costo Promedio</div>
+                            <div class="value">
+                                <%=
+                                    new Intl.NumberFormat('es-MX', {
+                                        style: 'currency',
+                                        currency: 'MXN'
+                                    }).format(articulo.costopromedio); 
+                                %>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Último Costo Real</div>
+                            <div class="value">
+                                <%=
+                                    new Intl.NumberFormat('es-MX', {
+                                        style: 'currency',
+                                        currency: 'MXN'
+                                    }).format(articulo.ultimoCostoReal); 
+                                %>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Stock Mínimo</div>
+                            <div class="value"><%=articulo.stockMinimo%></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Existencia</div>
+                            <div class="value">
+                                <%if(articulo.existencia==0){%> 
+                                    <span class="badge badge-danger badge-custom"><%=articulo.existencia%> disponibles</span> 
+                                <% }else{ %>
+                                    <span class="badge badge-success badge-custom"><%=articulo.existencia%> disponibles</span>
+                                <% } %>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div> 
+                </fieldset>
+            </div>
+              <!-- /.card-body -->
+        </div>
+          <!-- /.card -->
+           <div class="card">
+            <div class="card-body p-2">
+                <fieldset class="contenedor-borde">
+                    <legend class="titulo-borde">Almacenes*</legend>
+                     <% articulo.existenciasOficinas.forEach(alm=>{ %>
+                    <div class="col-md-4 float-left">
+                        <div class="almacen-card d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <div class="codigo">Código: <%=alm.id%></div>
+                                <div class="nombre"><%=alm.oficina.nombre%></div>
+                            </div>
+
+                            <div class="text-right">
+                                <div class="existencia text-success"><%=alm.cantidad%></div>
+                                <% if(alm.cantidad>0){%> 
+                                    <span class="badge badge-success badge-stock">Disponible</span>
+                                <% }else{%> 
+                                    <span class="badge badge-danger badge-stock">Bajo</span>
+                                <% } %>
+                                
+                            </div>
+
+                        </div>
+                    </div>
+                    <% }) %>
+                    <% articulo.existenciasUsuarios.forEach(alm=>{ %>
+                    <div class="col-md-4 float-left">
+                        <div class="almacen-card d-flex justify-content-between align-items-center">
+
+                            <div>
+                                <div class="codigo">Código: <%=alm.id%></div>
+                                <div class="nombre"><%=alm.usuario.nombre%></div>
+                            </div>
+
+                            <div class="text-right">
+                                <div class="existencia text-success"><%=alm.cantidad%></div>
+                                <% if(alm.cantidad>0){%> 
+                                    <span class="badge badge-success badge-stock">Disponible</span>
+                                <% }else{%> 
+                                    <span class="badge badge-danger badge-stock">Bajo</span>
+                                <% } %>
+                                
+                            </div>
+
+                        </div>
+                    </div>
+                    <% }) %>
+                </fieldset>
+            </div>
+              <!-- /.card-body -->
+        </div>
+          <!-- /.card -->
+    </section>
+</div>
+
+
+<!-- MODAL CREAR MOVIMIENTO CON SERIES -->
+<div class="modal fade" id="crearMovimientoSerie" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearMovimientoLabel">Nuevo Movimiento</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/almacen/articulos/nuevo-movimiento-serie" method="POST" id="formCrearMovimiento">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsMovimiento" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresMovimiento"></div>
+                    </div>
+                    
+                    <div class="form-group row">
+                        <label for="tipo" class="col-sm-2 col-form-label">Tipo</label>
+                        <div class="col-sm-10">
+                            <select name="tipo" id="tipo" class="form-control" onchange="cambiarSeries()">
+                                <option value="COMPRA">Compra</option>
+                                <option value="VENTA">Venta</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="concepto" class="col-sm-2 col-form-label">Concepto*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="concepto" name="concepto"  required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="fecha" class="col-sm-2 col-form-label">Fecha*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fecha" name="fecha" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="costoAplicado" class="col-sm-2 col-form-label">Costo del movimiento*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="costoAplicado" value="<%=articulo.costopromedio%>" name="costoAplicado" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group row" id="comprarSeries">
+                        <label for="serie" class="col-sm-2 col-form-label">Serie*</label>
+                        <div class="col-sm-10" id="lista-series">
+                            <input type="text" step="0.01" class="form-control" id="series[]" name="series[]">
+                        </div>
+                        <button type="button" id="btn-agregar-serie" class="btn btn-sm btn-secondary">+ Agregar otra serie</button>
+                    </div>
+                    <div class="form-group row d-none" id="venderSeries">
+                        <div class=" col-sm-2 float-left">
+                            <label for="serie" class="col-form-label font-weight-bold">Elije las series*</label>
+                        </div>
+                        <div class="col-sm-10">
+                            <div class="row">
+                                <% series.forEach(p=>{ %>
+                                    <div class="form-check col-sm-10 float-left">
+                                        <input class="form-check-input" type="checkbox"  value="<%=p.id%>" id="<%=p.id%>" name="seriesEliminar">
+                                        <label class="form-check-label" for="<%=p.id%>">
+                                            <%=p.serie%>
+                                        </label>
+                                    </div>
+                                <% }) %>
+                             </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <input type="text" value="<%=articulo.id%>" name="articulo" id="articulo" class="form-control d-none">
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CREAR MOVIMIENTO SIN SERIES -->
+<div class="modal fade" id="crearMovimiento" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearMovimientoLabel">Nuevo Movimiento</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/almacen/articulos/nuevo-movimiento" method="POST" id="formCrearMovimiento">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsMovimiento" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresMovimiento"></div>
+                    </div>
+                    
+                    <div class="form-group row">
+                        <label for="tipo" class="col-sm-2 col-form-label">Tipo</label>
+                        <div class="col-sm-10">
+                            <select name="tipo" id="tipo" class="form-control">
+                                <option value="COMPRA">Compra</option>
+                                <option value="VENTA">Venta</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="concepto" class="col-sm-2 col-form-label">Concepto*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="concepto" name="concepto"  required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="fecha" class="col-sm-2 col-form-label">Fecha*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fecha" name="fecha" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="cantidad" class="col-sm-2 col-form-label">Cantidad*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="cantidad" name="cantidad" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="costoAplicado" class="col-sm-2 col-form-label">Costo del movimiento*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="costoAplicado" name="costoAplicado" value="<%=articulo.costopromedio%>" placeholder="0" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <input type="text" value="<%=articulo.id%>" name="articulo" id="articulo" class="form-control d-none">
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR ARTICULO -->
+<div class="modal fade" id="editarArticulo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearArticuloLabel">Editar Articulo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/almacen/articulos/actualizar" method="POST" id="formCrearArticulo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsArticulo" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresArticulo"></div>
+                    </div>
+                    
+                    <div class="form-group row">
+                        <label for="codigo" class="col-sm-2 col-form-label">Código*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="codigo" name="codigo" value="<%=articulo.codigo%>"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="clavealterna" class="col-sm-2 col-form-label">Clave Alterna*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="clavealterna" name="clavealterna" value="<%=articulo.clavealterna%>"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="descripcion" class="col-sm-2 col-form-label">Descripción*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="descripcion" name="descripcion"  required> <%=articulo.descripcion%></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="marca" class="col-sm-2 col-form-label">Marca*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="marca" name="marca" value="<%=articulo.marca%>"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="modelo" class="col-sm-2 col-form-label">Modelo*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="modelo" name="modelo" value="<%=articulo.modelo%>"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="garantia" class="col-sm-2 col-form-label">Garantia(cantidad en meses)*</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="garantia" name="garantia" value="<%=articulo.garantia%>"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="preciopublico" class="col-sm-2 col-form-label">Precio Público*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="preciopublico" name="preciopublico" value="<%=articulo.preciopublico%>" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="stockMinimo" class="col-sm-2 col-form-label">Stock Mínimo*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="stockMinimo" name="stockMinimo" value="<%=articulo.stockMinimo%>" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="rendimiento" class="col-sm-2 col-form-label">Rendimiento*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="rendimiento" name="rendimiento" value="<%=articulo.rendimiento%>" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tamano" class="col-sm-2 col-form-label">Tamaño*</label>
+                        <div class="col-sm-10">
+                            <select name="tamano" id="tamano" class="form-control">
+                                <option value="A3" <%=articulo.tamano=='A3'?'selected':''%>>A3</option>
+                                <option value="A4" <%=articulo.tamano=='A4'?'selected':''%>>A4</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipocolor" class="col-sm-2 col-form-label">Color o Monocromo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipocolor" id="tipocolor" class="form-control">
+                                <option value="Color" <%=articulo.tipocolor=='Color'?'selected':''%>>Color</option>
+                                <option value="Monocromo" <%=articulo.tipocolor=='Monocromo'?'selected':''%>>Monocromo</option>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" value="<%=articulo.id%>" class="form-control d-none" name="id" id="id">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- VER SERIES -->
+<div class="modal fade" id="verSeries" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="verSeriesLabel">Series</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="contenedorSeries">
+                
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!--<script src="/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+<script src="/plugins/jszip/jszip.min.js"></script>
+<script src="/plugins/pdfmake/pdfmake.min.js"></script>
+<script src="/plugins/pdfmake/vfs_fonts.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>-->
+<script>
+    $(document).ready(function () {
+        document.getElementById('btn-agregar-serie').addEventListener('click', function() {
+            let input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'series[]';
+            input.className = 'form-control';
+            document.getElementById('lista-series').appendChild(input);
+        });
+        var table = $('#articulos').DataTable({
+            "processing":true,
+            "serverSide":true,
+            "ajax":{
+                "url":"/almacen/articulos/tabla",
+                "type":"GET"
+            },
+            rowId: 'id',
+            stateSave: true,
+            columns: [
+                { data:  null,
+                    render:function(data,type,row){
+                        return `<a href="/almacen/articulos/${row.id}">
+                                ${row.codigo}
+                            </a>`;
+                    }},
+                { data: 'descripcion'},
+                { data: 'marca'},
+                { data: 'modelo' },
+                { data: 'tipo' },
+                { data: 'garantia' },
+                { data: 'preciopublico'},
+            ],
+            columnDefs: [
+                {
+                    searchable: false,
+                    orderable: false,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+    });
+    function cambiarSeries(){
+        if(document.getElementById("tipo").value=="COMPRA"){
+            document.getElementById("comprarSeries").className="form-group row"
+            document.getElementById("venderSeries").className="form-group row d-none"
+        }else{
+            document.getElementById("comprarSeries").className="form-group row d-none"
+            document.getElementById("venderSeries").className="form-group row "
+        }
+    }
+    function obtenerSeries(id){
+        $.get(
+            '/almacen/articulos/obtener/series',
+            {id:id},
+            function (respuesta) {
+                let listaSeries = Array.isArray(respuesta.data) ? respuesta.data : [respuesta.data];
+
+                $('#verSeries').modal('show');
+                 let tablaHtml = `
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th class="border-0">ID</th>
+                                <th class="border-0">Número de Serie</th>
+                                <th class="border-0 text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                    listaSeries.forEach(item => {
+                        // Formato vistoso para el campo 'usado'
+                        let badgeEstado = item.usado ==="INSTALADO"
+                            ? '<span class="badge badge-pill badge-warning"><i class="fas fa-history"></i> Instalado</span>' 
+                            : '<span class="badge badge-pill badge-success"><i class="fas fa-check"></i> Disponible</span>';
+
+                        tablaHtml += `
+                            <tr>
+                                <td class="align-middle font-weight-bold text-muted">#${item.id}</td>
+                                <td class="align-middle">
+                                    <span class="text-primary"><i class="fas fa-barcode mr-2"></i>${item.serie}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    ${badgeEstado}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                
+
+                tablaHtml += `
+                        </tbody>
+                    </table>
+                `;
+
+                $('#contenedorSeries').html(tablaHtml);
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado el puesto";
+            document.getElementById('mostrarErroresAutoEditar').innerHTML=descErrores;
+            $('#errorsAutoEditar').show();
+            return false;
+        });
+    }
+</script>

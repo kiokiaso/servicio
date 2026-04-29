@@ -1,0 +1,285 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+<style>
+    .contenedor-borde{
+        border:1px solid #0067c6;
+        padding: 20px;
+        margin:20px;
+        border-radius:5px;
+    }
+    .titulo-borde{
+        padding: 0 10px;
+        font-weight: bold;
+        color:#333;
+        background-color: white;
+        width: auto;
+    }
+</style>
+
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Datos de la Oficina <%=oficina.nombre%> </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Admin</a></li>
+                        <li class="breadcrumb-item"><a href="/admin/oficinas">Oficinas</a></li>
+                        <li class="breadcrumb-item active">Datos Oficinas</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+              <h3 class="card-title"><%=oficina.razonsocial%> (<%=oficina.rfc%>)</h3>
+            </div>
+            <!-- /.card-header -->
+            <!-- /.card-header -->
+            <div class="card-body p-0">
+                <fieldset class="contenedor-borde">   
+                    <legend class="titulo-borde">Horarios*</legend>
+                    <div class="row">
+                        <div class="col-12 col-sm-6">
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <h3>Horarios de Lunes a viernes</h3>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 col-sm-6">
+                                    <div class="card card-success">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Entrada</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <%=oficina.horariolventrada%>
+                                        </div>
+                                        <!-- /.card-body -->
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="card card-danger">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Salida</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <%=oficina.horariolvsalida%>
+                                        </div>
+                                        <!-- /.card-body -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>   
+                        <div class="col-12 col-sm-6">
+                           <div class="row">
+                                <div class="col-12 text-center">
+                                    <h3>Horarios los sábados</h3>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 col-sm-6">
+                                    <div class="card card-success">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Entrada</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <%=oficina.horariosabadoentrada%>
+                                        </div>
+                                        <!-- /.card-body -->
+                                    </div>
+                                </div>
+                                <div class="col-12 col-sm-6">
+                                    <div class="card card-danger">
+                                        <div class="card-header">
+                                            <h3 class="card-title">Salida</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <%=oficina.horariosabadosalida%>
+                                        </div>
+                                        <!-- /.card-body -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>   
+                    </div>
+                </fieldset>
+                <fieldset class="contenedor-borde">   
+                    <div class="row">
+                        <div class="col-12 col-sm-4">
+                            <div class="info-box bg-light">
+                                <div class="info-box-content">
+                                    <span class="info-box-text text-center text-muted">Tiempo de respuesta</span>
+                                    <span class="info-box-number text-center text-muted mb-0"><%=oficina.tiemporespuesta%></span>
+                                </div>
+                            </div>
+                        </div>   <div class="col-12 col-sm-4">
+                            <div class="info-box bg-light">
+                                <div class="info-box-content">
+                                    <span class="info-box-text text-center text-muted">Tiempo de solución</span>
+                                    <span class="info-box-number text-center text-muted mb-0"><%=oficina.tiemposolucion%></span>
+                                </div>
+                            </div>
+                        </div> 
+                        <div class="col-12 col-sm-4">
+                            <div class="info-box bg-light">
+                                <div class="info-box-content">
+                                    <span class="info-box-text text-center text-muted">Días antes de la planificación de avisos</span>
+                                    <span class="info-box-number text-center text-muted mb-0"><%=oficina.planificaraviso%></span>
+                                </div>
+                            </div>
+                        </div> 
+                    </div>
+                </fieldset>
+            </div>
+              <!-- /.card-body -->
+            <div class="card-footer">
+                <a class="btn btn-info" onclick="obtenerDato(<%=oficina.id%>)">Editar</a>
+            </div>
+        </div>
+          <!-- /.card -->
+    </section>
+</div>
+
+
+<!-- MODAL CREAR ROLES -->
+<div class="modal fade" id="editarOficina" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearOficinaLabel">Editar Oficina</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/oficinas/actualizar" method="POST" id="formCrearOficina">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsOficina" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresOficina"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="razonsocial" class="col-sm-2 col-form-label">Razon social*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="razonsocial" name="razonsocial" placeholder="Razón social" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="rfc" class="col-sm-2 col-form-label">RFC*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="rfc" name="rfc" placeholder="Razón social" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="horariolventrada" class="col-sm-2 col-form-label">Horario de entrada lunes a viernes*</label>
+                        <div class="col-sm-10">
+                            <input type="time" class="form-control" id="horariolventrada" name="horariolventrada" value="09:00" step="1800" required min="07:00" max="18:00">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="horariolvsalida" class="col-sm-2 col-form-label">Horario de salida lunes a viernes*</label>
+                        <div class="col-sm-10">
+                            <input type="time" class="form-control" id="horariolvsalida" name="horariolvsalida" value="09:00" step="1800" required min="07:00" max="18:00">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="horariosabadoentrada" class="col-sm-2 col-form-label">Horario de entrada sábados*</label>
+                        <div class="col-sm-10">
+                            <input type="time" class="form-control" id="horariosabadoentrada" name="horariosabadoentrada" value="09:00" step="1800" required min="07:00" max="18:00">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="horariosabadosalida" class="col-sm-2 col-form-label">Horario de salida sábados*</label>
+                        <div class="col-sm-10">
+                            <input type="time" class="form-control" id="horariosabadosalida" name="horariosabadosalida" value="09:00" step="1800" required min="07:00" max="18:00">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tiemporespuesta" class="col-sm-2 col-form-label">Tiempo de respuesta*</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="tiemporespuesta" name="tiemporespuesta" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tiemposolucion" class="col-sm-2 col-form-label">Tiempo de solución*</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="tiemposolucion" name="tiemposolucion" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="planificaraviso" class="col-sm-2 col-form-label">Días antes para la planificación de avisos*</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="planificaraviso" name="planificaraviso" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <input type="text" name="idOficina" id="idOficina" class="d-none">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+
+<script>
+  
+  function obtenerDato(id){
+    $.get(
+        '/admin/oficinas/obtener',
+        {id:id},
+        function (respuesta) {
+            $('#editarOficina').modal('show');
+            document.getElementById('nombre').value=respuesta.data.nombre;
+            document.getElementById('idOficina').value=respuesta.data.id;
+            document.getElementById('razonsocial').value=respuesta.data.razonsocial;
+            document.getElementById('rfc').value=respuesta.data.rfc;
+            document.getElementById('horariolventrada').value=respuesta.data.horariolventrada;
+            document.getElementById('horariolvsalida').value=respuesta.data.horariolvsalida;
+            document.getElementById('horariosabadoentrada').value=respuesta.data.horariosabadoentrada;
+            document.getElementById('horariosabadosalida').value=respuesta.data.horariosabadosalida;
+            document.getElementById('tiemporespuesta').value=respuesta.data.tiemporespuesta;
+            document.getElementById('tiemposolucion').value=respuesta.data.tiemposolucion;
+            document.getElementById('planificaraviso').value=respuesta.data.planificaraviso;
+        }
+    ).fail(function(res){
+        descErrores=descErrores+"No se ha encontrado la oficina";
+        document.getElementById('mostrarErrores').innerHTML=descErrores;
+        $('#errors').show();
+        return false;
+    });
+  }
+</script>

@@ -1,0 +1,288 @@
+<!-- views/pages/clientes/detalle.ejs -->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CRM Cliente PRO</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.6.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+
+    <style>
+        body {
+            background: #eef1f5;
+        }
+
+        .card {
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .08);
+        }
+
+        .kpi {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .kpi h3 {
+            font-weight: bold;
+        }
+
+        .map {
+            height: 300px;
+            border-radius: 10px;
+        }
+
+        .sla-ok {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .sla-warning {
+            background: #ffc107;
+        }
+
+        .sla-danger {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        @media(max-width:768px) {
+            .kpi {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-fluid mt-3">
+
+        <!-- KPI DASHBOARD -->
+        <div class="row text-center">
+            <div class="col-md-3 col-6">
+                <div class="card kpi">
+                    <h3>
+                        <%= ubicaciones.length %>
+                    </h3><small>Ubicaciones</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card kpi">
+                    <h3>
+                        <%= contactos.length %>
+                    </h3><small>Contactos</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card kpi">
+                    <h3>
+                        <%= equipos.length %>
+                    </h3><small>Equipos</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card kpi <%= cliente.moroso ? 'sla-danger':'sla-ok' %>">
+                    <h3>
+                        <%= cliente.moroso ? 'Moroso' :'OK' %>
+                    </h3>
+                    <small>Estatus SLA</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAPA GENERAL + RUTA -->
+        <div class="card mt-3">
+            <div class="card-header"><i class="fas fa-route"></i> Rutas y Ubicaciones</div>
+            <div class="card-body">
+                <div id="mapRuta" class="map"></div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <ul class="nav nav-tabs mt-3">
+            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#ubicaciones">Ubicaciones</a></li>
+            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#contactos">Contactos</a></li>
+            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#equipos">Equipos</a></li>
+        </ul>
+
+        <div class="tab-content mt-2">
+
+            <!-- UBICACIONES -->
+            <div class="tab-pane fade show active" id="ubicaciones">
+                <div class="card">
+                    <div class="card-body table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Dirección</th>
+                                    <th>SLA</th>
+                                    <th>Mapa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% ubicaciones.forEach(u=>{ %>
+                                    <tr>
+                                        <td>
+                                            <%= u.nombre %>
+                                        </td>
+                                        <td>
+                                            <%= u.direccion %>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge <%= u.sla=='alto'?'sla-danger':u.sla=='medio'?'sla-warning':'sla-ok' %>">
+                                                <%= u.sla || 'normal' %>
+                                            </span>
+                                        </td>
+                                        <td><button class="btn btn-sm btn-primary"
+                                                onclick="verMapa(<%= u.lat %>,<%= u.lng %>)">Ver</button></td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTACTOS -->
+            <div class="tab-pane fade" id="contactos">
+                <div class="card">
+                    <div class="card-body table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Puesto</th>
+                                    <th>Ubicación</th>
+                                    <th>Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% contactos.forEach(c=>{ %>
+                                    <tr>
+                                        <td>
+                                            <%= c.nombre %>
+                                        </td>
+                                        <td>
+                                            <%= c.puesto %>
+                                        </td>
+                                        <td>
+                                            <%= c.ubicacion %>
+                                        </td>
+                                        <td><span class="badge badge-info">
+                                                <%= c.tipo %>
+                                            </span></td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EQUIPOS -->
+            <div class="tab-pane fade" id="equipos">
+                <div class="card">
+                    <div class="card-body table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Serie</th>
+                                    <th>Descripción</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Sitio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% equipos.forEach(e=>{ %>
+                                    <tr>
+                                        <td>
+                                            <%= e.serie %>
+                                        </td>
+                                        <td>
+                                            <%= e.descripcion %>
+                                        </td>
+                                        <td>
+                                            <%= e.marca %>
+                                        </td>
+                                        <td>
+                                            <%= e.modelo %>
+                                        </td>
+                                        <td>
+                                            <%= e.sitio %>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal fade" id="modalMapa">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Mapa</h5><button class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="mapDetalle" style="height:400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <script>
+
+        // MAPA RUTA + CLUSTER
+        const map = L.map('mapRuta').setView([<%= cliente.lat %>,<%= cliente.lng %>], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const cluster = L.markerClusterGroup();
+        let latlngs = [];
+
+<% ubicaciones.forEach(u => { %>
+            let marker = L.marker([<%= u.lat %>,<%= u.lng %>]).bindPopup("<%= u.nombre %>");
+            cluster.addLayer(marker);
+            latlngs.push([<%= u.lat %>,<%= u.lng %>]);
+<% }) %>
+
+            map.addLayer(cluster);
+
+        // DIBUJAR RUTA SIMPLE
+        if (latlngs.length > 1) {
+            L.polyline(latlngs, { color: 'blue' }).addTo(map);
+        }
+
+        // MODAL MAPA
+        function verMapa(lat, lng) {
+            $('#modalMapa').modal('show');
+            setTimeout(() => {
+                let m = L.map('mapDetalle').setView([lat, lng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(m);
+                L.marker([lat, lng]).addTo(m);
+            }, 300);
+        }
+
+    </script>
+
+</body>
+
+</html>

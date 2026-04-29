@@ -1,0 +1,413 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Usuarios</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Admin</a></li>
+                        <li class="breadcrumb-item active">Usuarios</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Usuarios</h3>
+            </div>
+            <!-- /.card-header -->
+            <!-- /.card-header -->
+            <div class="card-body p-2">
+                <table class="display table table-bordered table-striped w-100" id="usuarios">
+                  <thead>
+                    <tr>
+                      <th style="width: 10px">Id</th>
+                      <th>Nombre</th>
+                      <th>Email</th>
+                      <th>Oficina</th>
+                      <th>Puesto</th>
+                      <th>Role</th>
+                      <th>Fecha</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                      <% usuarios.forEach(usuario=>{ %>
+                    <tr>
+                      <td><%=usuario.id%></td>
+                      <td><a onclick="obtenerDato(<%=usuario.id%>)" class="enlaceModificar"><%=usuario.nombre%></a></td>
+                      <td><%=usuario.email%></td>
+                      <td><%=usuario.oficinas.nombre%></td>
+                      <td><%=usuario.puestos.nombre%></td>
+                      <td><%=usuario.roles.nombre%></td>
+                      <td>
+                        <%= new Date(usuario.createdAt).toLocaleString('es-ES', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            second: '2-digit' 
+                        }) %>
+                      </td>
+                      <td><%
+                        if(usuario.activo==1){ %>
+                            <a class="btn btn-danger" href="/admin/usuarios/eliminar/<%=usuario.id%>">Desactivar</a>
+                            <a class="btn btn-info" href="/admin/usuarios/sucursales/<%=usuario.id%>">Agregar sucursales</a>
+                        <% }else{ %>
+                            <a class="btn btn-success" href="/admin/usuarios/activar/<%=usuario.id%>">Activar</a>
+                        <% } %>
+                      </td>
+                    </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+              <!-- /.card-body -->
+              <div class="card-footer">
+                  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearUsuario">
+                      Crear Usuario
+                  </button>
+              </div>
+            </div>
+          <!-- /.card -->
+    </section>
+</div>
+
+
+
+<!-- Modal crear usuario -->
+<div class="modal fade" id="crearUsuario" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearUsuarioLabel">Crear Usuario</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/usuarios/crear" method="POST" id="formCrearUsuario">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errors" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErrores"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre"
+                                >
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="iniciales" class="col-sm-2 col-form-label">Iniciales*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="iniciales" name="iniciales"
+                                placeholder="Iniciales" onFocus="inicio()" onKeyUp="mayus()">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="email" class="col-sm-2 col-form-label">Email*</label>
+                        <div class="col-sm-10">
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Email">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="password" class="col-sm-2 col-form-label">Contraseña*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="password" name="password"
+                                placeholder="Contraseña" onfocus="crearPassword()">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="color" class="col-sm-2 col-form-label">Color</label>
+                        <div class="col-sm-10">
+                            <input type="color" class="form-control" id="color" name="color" placeholder="Móvil">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="oficina" class="col-sm-2 col-form-label">Oficina*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="oficinas" id="oficinas" >
+                                <option value="0">Elige una oficina</option>
+                                <% oficinas.forEach(oficina=>{ %>
+                                  <option value="<%=oficina.id%>"><%=oficina.nombre%></option>
+                                <% }) %>
+
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="roles" class="col-sm-2 col-form-label">Role*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="roles" id="roles" >
+                                <option value="0">Elige un role</option>
+                                <% roles.forEach(rol=>{ %>
+                                  <option value="<%=rol.id%>"><%=rol.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="puestos" class="col-sm-2 col-form-label">Puesto</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="puestos" id="puestos" >
+                                <option value="0">Elige un puesto</option>
+                                <% puestos.forEach(puesto=>{ %>
+                                    <option value="<%=puesto.id%>"><%=puesto.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar usuario -->
+<div class="modal fade" id="editarUsuario" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearUsuarioLabel">Modificar Usuario</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/usuarios/actualizar" method="POST" id="formModificarUsuario">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsUsuario" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresUsuario"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombreUsuario" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreUsuario" name="nombreUsuario" placeholder="Nombre">
+                            <input type="text" class="form-control d-none" id="idUsuario" name="idUsuario" >
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="inicialesUsuario" class="col-sm-2 col-form-label">Iniciales*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="inicialesUsuario" name="inicialesUsuario"
+                                placeholder="Iniciales" onFocus="inicioUsuario()" onKeyUp="mayusUsuario()">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="emailUsuario" class="col-sm-2 col-form-label">Email*</label>
+                        <div class="col-sm-10">
+                            <input type="email" class="form-control" id="emailUsuario" name="emailUsuario" placeholder="Email"
+                                >
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="passwordUsuario" class="col-sm-2 col-form-label">Contraseña*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="passwordUsuario" name="passwordUsuario"
+                                placeholder="Contraseña">
+                            <span onclick="crearPasswordUsuario()" class="enlace pointer">Generar Contraseña</span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="colorUsuario" class="col-sm-2 col-form-label">Color</label>
+                        <div class="col-sm-10">
+                            <input type="color" class="form-control" id="colorUsuario" name="colorUsuario" placeholder="Móvil">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="oficinasUsuario" class="col-sm-2 col-form-label">Oficina*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="oficinasUsuario" id="oficinasUsuario" >
+                                <option value="0">Elige una oficina</option>
+                                <% oficinas.forEach(oficina=>{ %>
+                                  <option value="<%=oficina.id%>"><%=oficina.nombre%></option>
+                                <% }) %>
+
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="rolesUsuario" class="col-sm-2 col-form-label">Role*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="rolesUsuario" id="rolesUsuario" >
+                                <option value="0">Elige un role</option>
+                                <% roles.forEach(rol=>{ %>
+                                    <option value="<%=rol.id%>"><%=rol.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="puestosUsuario" class="col-sm-2 col-form-label">Puesto</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="puestosUsuario" id="puestosUsuario" >
+                                <option value="0">Elige un puesto</option>
+                                <% puestos.forEach(puesto=>{ %>
+                                    <option value="<%=puesto.id%>"><%=puesto.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Modificar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- partial('../../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+
+<script>
+   $(document).ready(function () {
+        var t = $('#usuarios').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+                //t.buttons().container().appendTo('#inventario_wrapper .col-md-6:eq(0)');   
+    });
+    function obtenerDato(id){
+        $.get(
+            '/admin/usuarios/obtener',
+            {id:id},
+            function (respuesta) {
+                $('#editarUsuario').modal('show');
+                document.getElementById('nombreUsuario').value=respuesta.data.nombre;
+                document.getElementById('inicialesUsuario').value=respuesta.data.iniciales;
+                document.getElementById('emailUsuario').value=respuesta.data.email;
+                document.getElementById('oficinasUsuario').value=respuesta.data.oficinas;
+                document.getElementById('rolesUsuario').value=respuesta.data.roles;
+                document.getElementById('puestosUsuario').value=respuesta.data.puestos;
+                document.getElementById('colorUsuario').value=respuesta.data.color;
+                document.getElementById('idUsuario').value=respuesta.data.id;
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado el Role";
+            document.getElementById('mostrarErrores').innerHTML=descErrores;
+            $('#errors').show();
+            return false;
+        });
+    }
+    function crearPasswordUsuario(){
+        var pass = '';
+        var str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$';
+        for (i = 1; i <= 10; i++) {
+            var char = Math.floor(Math.random() * str.length + 1);
+            pass += str.charAt(char)
+        }
+        document.getElementById("passwordUsuario").value=pass;
+    }
+    function crearPassword(){
+      var pass = '';
+      var str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$';
+      for (i = 1; i <= 10; i++) {
+          var char = Math.floor(Math.random() * str.length + 1);
+          pass += str.charAt(char)
+      }
+      document.getElementById("password").value=pass;
+    }
+    function inicio(){
+        var  nombreDos= document.getElementById("nombre");
+        var nombre=nombreDos.value;
+        nombre=nombre.trim();
+        var descErrores="";
+        if(nombre==""||nombre==0){
+            nombreDos.className = "form-control invalido";
+            descErrores=descErrores+"Debes elegir ingresar un nombre<br>";
+            document.getElementById('errors').innerHTML=descErrores;
+            //$('#errors').val(descErrores);
+            $('#errors').show();
+        }
+        else{
+            var subCadena=nombre.split(" ");
+            var iniciales="";
+            for(var i=0;i<subCadena.length;i++){
+                iniciales=iniciales+subCadena[i].charAt(0);
+            }
+            document.getElementById("iniciales").value=iniciales.toUpperCase();
+            nombreDos.className = "form-control valido";
+            $('#errors').hide();
+        }
+    }
+    function mayus(){
+        var iniciales= document.getElementById("iniciales").value;
+        document.getElementById("iniciales").value=iniciales.toUpperCase();
+    }
+    function inicioUsuario(){
+      var  nombreDos= document.getElementById("nombreUsuario");
+      var nombre=nombreDos.value;
+      nombre=nombre.trim();
+      var descErrores="";
+      if(nombre==""||nombre==0){
+          nombreDos.className = "form-control invalido";
+          descErrores=descErrores+"Debes elegir ingresar un nombre<br>";
+          document.getElementById('errors').innerHTML=descErrores;
+          //$('#errors').val(descErrores);
+          $('#errors').show();
+      }
+      else{
+          var subCadena=nombre.split(" ");
+          var iniciales="";
+          for(var i=0;i<subCadena.length;i++){
+              iniciales=iniciales+subCadena[i].charAt(0);
+          }
+          document.getElementById("inicialesUsuario").value=iniciales.toUpperCase();
+          nombreDos.className = "form-control valido";
+          $('#errors').hide();
+      }
+  }
+  function mayusUsuario(){
+      var iniciales= document.getElementById("inicialesUsuario").value;
+      document.getElementById("inicialesUsuario").value=iniciales.toUpperCase();
+  }
+  
+</script>

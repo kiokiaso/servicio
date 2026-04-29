@@ -1,0 +1,78 @@
+<!--<script src="/plugins/jquery/jquery.min.js"></script>-->
+<script src="/js/datatables/jquery-3.5.1.js"></script>
+  <!-- Bootstrap 4 -->
+  <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+  
+<script src="/js/adminlte.js"></script>
+
+<script src="/js/app.js"></script>
+    <script type="text/javascript">
+      window._csrf = "";
+    </script>
+<script src="/dependencies/sails.io.js"></script>
+<script src="/plugins/toastr/toastr.min.js"></script>
+<script src="/js/chat.js"></script>
+<script>
+  $(document).ready(function() {
+    restaurarChats();
+      $('#formCambiarOficina').on('submit', function() {
+        const $btn=$('#botonEnviar')
+        $btn.prop('disabled',true)
+        $btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando...');
+      });
+  });
+</script>
+<script>
+      io.socket.on('user_connected', (data) => {
+        alert(`Usuario ${data.username} está listo para chatear`);
+        // Actualizar UI (poner circulito verde, etc.)
+      });
+  function cambiarOficina(id){
+    $.get(
+        '/config/oficinas/obtener',
+        {id:id},
+        function (respuesta) {
+            $('#cambiarOficina').modal('show');
+            const label = document.createElement('label');
+            label.textContent = 'Elige una oficina';
+            label.className = 'col-sm-2 col-form-label'; 
+            label.htmlFor = 'oficinasCambiar';
+
+            const divSelect = document.createElement('div');
+            divSelect.className = 'col-sm-10';
+
+            const select = document.createElement('select');
+            select.name = "oficinasCambiar";
+            select.id = "oficinasCambiar";
+            select.className = "form-control"; 
+
+            respuesta.oficinas.forEach(oficina => {
+              const option = document.createElement('option');
+              option.value = oficina.id;
+              option.text = oficina.nombre;
+              select.appendChild(option);
+            });
+
+            const contenedor = document.getElementById('contenedorOficinas');
+            divSelect.appendChild(select);
+            contenedor.innerHTML = ''; 
+            contenedor.appendChild(label);
+            contenedor.appendChild(divSelect);
+        }
+    ).fail(function(res){
+        descErrores=descErrores+"No se ha encontrado el puesto";
+        document.getElementById('mostrarErroresRutaEditar').innerHTML=descErrores;
+        $('#errorsRutaEditar').show();
+        return false;
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    // Verificamos si el socket está listo
+    if (window.io && io.socket) {
+      // Enviamos un "ping" al servidor para que asocie este socket con la sesión de Passport
+      /*io.socket.get('/user/sync-socket', function(data, jwr) {
+        console.log('Estado de conexión sincronizado:', data);
+      });*/
+    }
+  });
+</script>

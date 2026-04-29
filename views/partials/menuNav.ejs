@@ -1,0 +1,299 @@
+<!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="/" class="brand-link">
+      <img src="/images/imagenes/logo 1.png" alt="Grupo Exi Logo" class="brand-image">
+      <span class="brand-text font-weight-light">Grupo Exi</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar mb-5">
+      <!-- Sidebar user panel (optional) -->
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image">
+          <% if(session.usuario.avatar==""){ %>
+            <img src="/images/perfil/vacio.png" class="img-circle elevation-2" alt="User Image">
+          <% }else{ %>
+            <img src="<%=session.usuario.avatar%>" class="img-circle elevation-2" alt="User Image">
+          <% } %>
+
+        </div>
+        <div class="info">
+          <a href="/perfil/<%=session.usuario.id%>" class="d-block"><%=session.usuario.nombre%></a>
+        </div>
+
+      </div>
+
+      <!-- SidebarSearch Form -->
+      <div class="form-inline">
+        <div class="input-group" data-widget="sidebar-search">
+          <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
+          <div class="input-group-append">
+            <button class="btn btn-sidebar">
+              <i class="fas fa-search fa-fw"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Menu -->
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+          <!-- Add icons to the links using the .nav-icon class
+               with font-awesome or any other icon font library -->
+          <li class="nav-item active">
+            <a href="/" class="nav-link">
+              <i class="nav-icon bi-people-fill"></i>
+                <p>Inicio</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="/avisos" class="nav-link">
+              <i class="nav-icon bi bi-journal-text"></i>
+              <p>
+                Avisos
+                <i class="fas fa-angle-right right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="/avisos/pendientes" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Pendientes</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/avisos/finalizados" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Finalizados</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/avisos/calendario" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Calendario</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/avisos/remotos" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Lecturas Remotas</p>
+                </a>
+              </li>
+            </ul>
+          </li><li class="nav-item">
+            <a href="/lecturas" class="nav-link">
+              <i class="nav-icon bi-speedometer2"></i>
+              <p>
+                Lecturas
+                <i class="fas fa-angle-right right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="/lecturas" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Programación</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/lecturas/avisos" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Crear avisos</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a href="/equipos" class="nav-link">
+              <i class="nav-icon bi-printer"></i>
+              <p>
+                Equipos
+                <i class="fas fa-angle-right right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="/equipos" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Activos</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/equipos/bajas" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Inactivos</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a href="/clientes" class="nav-link">
+              <i class="nav-icon bi-building"></i>
+              <p>
+                Clientes
+                <i class="fas fa-angle-right right"></i>
+              </p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon bi bi-box-seam"></i>
+              <p>
+                Almacén
+                <i class="fas fa-angle-right right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="/almacen/articulos" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Articulos</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/almacen/stock" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Stock</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/almacen/movimientos" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Movimientos</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="/almacen/transferencia" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Transferencia</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon bi bi-gear-wide-connected"></i>
+              <p>
+                Maestros
+                <i class="fas fa-angle-right right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a href="/maestros/rutas" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Rutas</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="/maestros/autos" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Autos</p>
+                  </a>
+                </li>
+              </ul>
+          </li>        
+      
+          <% if(session.usuario.roles.nombre=='SuperAdministrador'){ %>
+          <li class="nav-item">
+            <a href="#" class="nav-link">
+              <i class="nav-icon bi bi-pencil-square"></i>
+              <p>
+                Sistema
+                <i class="fas fa-angle-right right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a href="/admin/usuarios" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Usuarios</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="/admin/maestros" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Maestros</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="/admin/maestros/plantillas" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Plantillas</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="/admin/oficinas" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Oficinas</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="/admin/roles" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Roles</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="/admin/permisos" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Permisos</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="/admin/puestos" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Puestos</p>
+                  </a>
+                </li>
+               <!-- <li class="nav-item">
+                  <a href="/admin/notificaciones" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Notificaciones</p>
+                  </a>
+                </li>-->
+            </ul>
+          </li>
+          <% } %>
+        </ul>
+      </nav>
+      <div class="mb-5" style="color:#343a40"><br><br></div>
+      <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+  </aside>
+
+
+
+<!-- MODAL EDITAR PERMISOS -->
+<div class="modal fade" id="cambiarOficina" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="CambiarOficinaLab">Cambiar de oficina</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/config/oficinas/cambiar" method="POST" id="formCambiarOficina">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsCambiarOficina" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresCambiarOficina"></div>
+                    </div>
+                    <div class="form-group row" id="contenedorOficinas">
+                        <p>Cargando oficinas...</p>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary" id="botonEnviar">Cambiar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

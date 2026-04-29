@@ -1,0 +1,876 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+<link rel="stylesheet" href="/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+
+
+<style>
+    .card-info-header {
+        border-left: 4px solid #007bff;
+    }
+    .status-pill {
+        font-size: 0.8rem;
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    .card {
+        border-radius: 12px;
+        border: none;
+    }
+    .nav-tabs-custom .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+    }
+    .nav-tabs-custom .nav-link.active {
+        color: #007bff;
+        border-bottom: 3px solid #007bff;
+        background: transparent;
+    }
+</style>
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h2 class="font-weight-bold text-dark mb-0"><i class="nav-icon bi-speedometer2"></i><%=lectura.nombre%> </h2>
+                   
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/lecturas">Lecturas</a></li>
+                        <li class="breadcrumb-item active">Ficha</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+<div class="container-fluid  bg-light min-vh-100">
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4 card-info-header">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted small font-weight-bold mb-3">Datos del Cliente</h6>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mr-3" style="width: 45px; height: 45px;">
+                            <i class="fas fa-user border-0"></i>
+                        </div>
+                        <div>
+                            <p class="mb-0 font-weight-bold"><%= lectura.cliente.razonsocial %></p>
+                            <small class="text-muted">ID Cliente: #<%= lectura.cliente.codigo %></small>
+                        </div>
+                        <div>
+                                <% if(lectura.ubicacion&&lectura.ubicacion.oficinaAtencion===oficinaElegida.id){ %>
+                                    <span class="badge badge-danger">Póliza entre exi <%=lectura.oficina.nombre%></span> 
+                                <% }  %>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label class="text-muted small mb-1 d-block">Ubicación</label>
+                        <p class="font-weight-500"><i class="fas fa-map-marker-alt text-danger mr-1"></i> <%= lectura.ubicacion.nombre %></p>
+                    </div>
+                    <div class="row border-top mb-3">
+                        <div class="col-6">
+                            <label class="text-muted small mb-1 d-block">Periodicidad</label>
+                            <span class="badge badge-soft-primary"><%= lectura.periodicidad %></span>
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small mb-1 d-block">Agrupado</label>
+                            <span class="badge <%= lectura.agruparequipos ? 'badge-success' : 'badge-secondary' %>">
+                                <%= lectura.agruparequipos ? 'Sí' : 'No' %>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row border-top ">
+                        <div class="col-6">
+                            <label class="text-muted small mb-1 d-block">Fecha de inicio</label>
+                           <span class="badge badge-soft-primary"><%= new Date(lectura.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })  %></span>
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small mb-1 d-block">Fecha de fin</label>
+                           <span class="badge badge-soft-primary"><%= new Date(lectura.fin).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })  %></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="p-3 border-bottom">
+                        <h6 class="mb-0 font-weight-bold">Observaciones</h6>
+                    </div>
+                    <div class="p-3">
+                        <p class="text-muted small mb-0">
+                            <%= lectura.observaciones || 'Sin observaciones registradas.' %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="row justify-content-end mb-4">
+                <div class="col-auto"> <div class="btn-group shadow-sm">
+                        <button class="btn btn-white bg-success border" onclick="modalAgregarEquipo(<%=lectura.id%>)">
+                            <i class="bi bi-printer-fill mr-1"></i> Agregar Equipo
+                        </button>
+                        <button class="btn btn-white bg-warning border" data-toggle="modal" data-target="#editarLectura">
+                            <i class="fas fa-edit mr-1"></i> Editar
+                        </button>
+                        <button class="btn btn-info" data-toggle="modal" data-target="#agregarAsistencia">
+                            <i class="fas fa-calendar-check mr-1"></i> Agregar 1 Asistencia
+                        </button>
+                        <%
+                            let inicioTs = new Date(lectura.inicio).getTime();
+                            let finTs = new Date(lectura.fin).getTime();
+                            
+                            // El botón se habilita solo si Inicio < Fin
+                            if(inicioTs < finTs){
+                        %>
+                        <button class="btn btn-primary" onclick="generarAsistencias(<%=lectura.id%>)">
+                            <i class="fas fa-calendar-plus mr-1"></i> Programar Asistencia
+                        </button>
+                        <% }else{ %>
+                            <div class="alert alert-info" role="alert">
+                                <i class="bi bi-x-circle-fill mr-2"></i> <!-- Icono opcional -->
+                                la fecha de inicio debe ser menor a la de fin para poder crear las asistencias
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-white p-0">
+                    <ul class="nav nav-tabs nav-tabs-custom border-0" id="myTab" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="equipos-tab" data-toggle="tab" href="#equipos" role="tab">
+                                <i class="fas fa-microchip mr-2"></i>Equipos Vinculados
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="asistencias-tab" data-toggle="tab" href="#asistencias" role="tab">
+                                <i class="fas fa-clock mr-2"></i>Historial de Asistencias
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-0">
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="equipos" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="bg-light text-muted small text-uppercase">
+                                        <tr>
+                                            <th class="border-0 pl-4">Descripción</th>
+                                            <th class="border-0">Nº Serie</th>
+                                            <th class="border-0 text-right pr-4">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% lectura.equiposAsignados.forEach(ea => { %>
+                                        <tr>
+                                            <td class="pl-4 align-middle font-weight-bold"><%= ea.equipo.descripcion %></td>
+                                            <td class="align-middle"><code><%= ea.equipo.numeroserie %></code></td>
+                                            <td class="text-right pr-4">
+                                                <button class="btn btn-sm btn-link text-danger btnEliminarEquipo" data-id="<%=ea.id%>" title="Quitar equipo" >
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="asistencias" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="bg-light text-muted small text-uppercase">
+                                        <tr>
+                                            <th class="border-0 pl-4">Fecha Prevista</th>
+                                            <th class="border-0">Estado</th>
+                                            <th class="border-0">Descripción</th>
+                                            <th class="border-0">Aviso</th>
+                                            <th class="border-0 text-right pr-4">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% lectura.asistencias.forEach(ast => { %>
+                                        <tr>
+                                            <td class="pl-4 align-middle">
+                                                <%= new Date(ast.fechaprevista).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) %>
+                                                
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="status-pill badge <%= ast.estado === 'pendiente' ? 'badge-warning text-dark' : 'badge-success' %>">
+                                                    <%= ast.estado %>
+                                                </span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span class="text-muted small italic"><%=ast.descripcion%></span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <% if(ast.avisos.length>0) {
+                                                    ast.avisos.forEach(av => {  %>
+                                                        <a href="/avisos/<%= av.id %>" class="badge badge-info">#<%= av.folio %></a>
+                                                   <%  })
+                                                 } else { %>
+                                                    <span class="text-muted small italic">Sin aviso</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="text-right pr-4">
+                                                <%if(ast.estado=='pendiente'){%>
+                                                <button class="btn btn-sm btn-link text-warning btnEditarAsistencia" data-id="<%=ast.id%>" title="Editar Asistencia" >
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-link text-danger btnEliminarAsistencia" data-id="<%=ast.id%>" title="Eliminar Asistencia" >
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                <%}%>
+                                            </td>
+                                        </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </section>
+</div>
+
+<!-- MODAL EDITAR LECTURA -->
+<div class="modal fade" id="editarLectura" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Editar Lectura</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" >
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" required value="<%=lectura.nombre%>">
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="inicio" class="col-sm-2 col-form-label">Fecha de inicio*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="inicio" name="inicio" required >
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="fin" class="col-sm-2 col-form-label">Fecha de fin*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fin" name="fin" required >
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="agrupar" class="col-sm-2 col-form-label">Agrupar elementos*</label>
+                        <div class="col-sm-10">
+                            <select name="agrupar" id="agrupar" class="form-control">
+                                <option value="true" <%=lectura.agrupar==true?'selected':''%>>Si</option>
+                                <option value="false" <%=lectura.agrupar==false?'selected':''%>>No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="observaciones" class="col-sm-2 col-form-label">Observaciones*</label>
+                        <div class="col-sm-10">
+                            <textarea name="observaciones" id="observaciones" rows="3" class="form-control"><%=lectura.observaciones%></textarea>
+                        </div>
+                    </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarDatos()">Editar</button>
+                <input type="text" class="d-none" name="idLectura" id="idLectura" value="<%=lectura.id%>">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL AGREGAR EQUIPO -->
+<div class="modal fade" id="agregarEquipo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Agregar Equipo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" >
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+
+                    <div class="table table-responsive">
+                        <table id="tablaEquipos" class="w-100">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Serie</th>
+                                    <th>Descripción</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarEquipos()">Agregar</button>
+                <input type="text" class="d-none" name="lecturas" id="lecturas" value="<%=lectura.id%>">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- MODAL EDITAR LECTURA -->
+<div class="modal fade" id="agregarAsistencia" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Agregar Asistencia</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" >
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="fechaprevistaAgregar" class="col-sm-2 col-form-label">Fecha prevista*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fechaprevistaAgregar" name="fechaprevistaAgregar" required >
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="descripcionAgregar" class="col-sm-2 col-form-label">Descripción*</label>
+                        <div class="col-sm-10">
+                            <textarea name="descripcionAgregar" id="descripcionAgregar" rows="3" class="form-control"></textarea>
+                        </div>
+                    </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="agregarDatosAsistencia()">Agregar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR LECTURA -->
+<div class="modal fade" id="editarAsistencia" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Editar Asistencia</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" >
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="fechaprevista" class="col-sm-2 col-form-label">Fecha prevista*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fechaprevista" name="fechaprevista" required >
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="descripcion" class="col-sm-2 col-form-label">Descripción*</label>
+                        <div class="col-sm-10">
+                            <textarea name="descripcion" id="descripcion" rows="3" class="form-control"></textarea>
+                        </div>
+                    </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarDatosAsistencia()">Editar</button>
+                <input type="text" class="d-none" name="idAsistencia" id="idAsistencia" >
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="/plugins/sweetalert2/sweetalert2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        document.getElementById('btn-agregar-serie').addEventListener('click', function() {
+            let input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'series[]';
+            input.className = 'form-control';
+            document.getElementById('lista-series').appendChild(input);
+        });
+        var table = $('#articulos').DataTable({
+            "processing":true,
+            "serverSide":true,
+            "ajax":{
+                "url":"/almacen/articulos/tabla",
+                "type":"GET"
+            },
+            rowId: 'id',
+            stateSave: true,
+            columns: [
+                { data:  null,
+                    render:function(data,type,row){
+                        return `<a href="/almacen/articulos/${row.id}">
+                                ${row.codigo}
+                            </a>`;
+                    }},
+                { data: 'descripcion'},
+                { data: 'marca'},
+                { data: 'modelo' },
+                { data: 'tipo' },
+                { data: 'garantia' },
+                { data: 'preciopublico'},
+            ],
+            columnDefs: [
+                {
+                    searchable: false,
+                    orderable: false,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+    });
+    function generarAsistencias(id){
+        Swal.fire({
+            title: '¿Deseas generar las asistencias?',
+            text: "Debes tener en cuenta que si hay asistencias creadas para esta toma de lectura, estas se van a eliminar para poder generar las nuevas",
+            icon: 'question',
+            input: 'textarea', // Cambia a 'text' si quieres una sola línea
+            inputValue: 'Toma de lectura',
+            inputAttributes: {
+                'aria-label': 'Escribe tu descripción',
+                'rows': 3,
+                'id':'descripcionLectura'
+            },
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6', // Azul profesional
+            cancelButtonColor: '#6c757d', // Gris neutro
+            confirmButtonText: '<i class="fas fa-check"></i> Acepto',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            allowOutsideClick: false 
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Aquí ejecutas tu lógica de AJAX
+                Swal.fire({
+                    title: 'Generando asistencias...',
+                    html: 'Por favor espere un momento.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                let desc=result.value
+                $.post(
+                    '/lecturas/asistencias/generar',
+                    {id:id,descripcion:desc},
+                    function (res) {
+                        Swal.fire({
+                            title: '¡Operación Exitosa!',
+                            text: `Se han generado ${res.cantidad} asistencias correctamente.`,
+                            icon: 'success',
+                            confirmButtonText: 'Entendido'
+                        }).then(() => {
+                            location.reload(); // Recargamos para ver los cambios en la tabla
+                        });
+                        
+                    }).fail(function (res) {
+                        Swal.fire('Error', 'No se pudieron generar las asistencias. Intente de nuevo.', 'error');
+                    });
+                //alert(`Has elegido que si: ${desc}`)
+            }
+        });
+        /**/
+    };
+    function agregarDatosAsistencia(){
+        let datos = [];
+        let lecturas=document.getElementById('idLectura').value;
+        let descripcion=document.getElementById('descripcionAgregar').value;
+        let fechaprevista=document.getElementById('fechaprevistaAgregar').value;
+        
+        $.post(
+            '/lecturas/asistencias/agregar',
+            {id:lecturas,descripcion,fechaprevista},
+            function (res) {
+                $(document).Toasts('create', {
+                    class: 'bg-success',
+                    title: 'Error',
+                    body: `Se ha agregado la asistencia de forma correcta`,
+                })
+                setTimeout(()=>{
+                    window.location.href = `/lecturas/${lecturas}`;    
+                },1000)
+                   
+            }).fail(function (res) {
+               $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    body: `Se ha producido un error al momento de actualizar la información`,
+                })
+            });
+    };
+    function guardarDatosAsistencia(){
+        let datos = [];
+        let asistencia=document.getElementById('idAsistencia').value;
+        let lecturas=document.getElementById('idLectura').value;
+        let descripcion=document.getElementById('descripcion').value;
+        let fechaprevista=document.getElementById('fechaprevista').value;
+        
+        $.post(
+            '/lecturas/asistencias/actualizar',
+            {id:asistencia,descripcion,fechaprevista},
+            function (res) {
+                $(document).Toasts('create', {
+                    class: 'bg-success',
+                    title: 'Error',
+                    body: `Se ha actualizado de forma correcta la información`,
+                })
+                setTimeout(()=>{
+                    window.location.href = `/lecturas/${lecturas}`;    
+                },1000)
+                   
+            }).fail(function (res) {
+               $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    body: `Se ha producido un error al momento de actualizar la información`,
+                })
+            });
+    };
+    function guardarDatos(){
+        let datos = [];
+        let lecturas=document.getElementById('idLectura').value;
+        let nombre=document.getElementById('nombre').value;
+        let inicio=document.getElementById('inicio').value;
+        let fin=document.getElementById('fin').value;
+        let agrupar=document.getElementById('agrupar').value;
+        let observaciones=document.getElementById('observaciones').value;
+        if(inicio.length===0||nombre.length===0||observaciones.length===0){
+            return  $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    body: `Tienes que llenar todos los campos`,
+                })
+        }
+        
+        $.post(
+            '/lecturas/actualizar',
+            {id:lecturas,nombre,inicio,agrupar,observaciones,fin},
+            function (res) {
+                $(document).Toasts('create', {
+                    class: 'bg-success',
+                    title: 'Error',
+                    body: `Se ha actualizado de forma correcta la información`,
+                })
+                setTimeout(()=>{
+                    window.location.href = `/lecturas/${lecturas}`;    
+                },1000)
+                   
+            }).fail(function (res) {
+               $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    body: `Se ha producido un error al momento de actualizar la información`,
+                })
+            });
+    };
+    function guardarEquipos(){
+        let datos = [];
+        let lecturas=document.getElementById('lecturas').value;
+        $('.check-item:checked').each(function() {
+            let fila = $(this).closest('tr');
+            datos.push({ id: fila.data('id') });
+        });
+        if(datos.length==0){
+            return $(document).Toasts('create', {
+                class: 'bg-danger',
+                title: 'Error',
+                body: `Debes seleccionar por lo menos un equipo`,
+            })
+        }
+        $.post(
+            '/lecturas/agregar-equipo',
+            {equipos:datos,lecturas},
+            function (res) {
+                if(res.resp==1){
+                    window.location.href = `/lecturas/${res.lectura.id}`;
+                }
+            }).fail(function (res) {
+               $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    body: `Se ha producido un error al momento de agregar más equipos`,
+                })
+            });
+    };
+    function modalAgregarEquipo(id){
+        $.get(
+                '/lecturas/equipo/datos',
+                {id:id},
+                function (respuesta) {
+                    if(respuesta.resp==0){
+                        $(document).Toasts('create', {
+                            class: 'bg-danger',
+                            title: 'Error',
+                            subtitle: '',
+                            body:respuesta.message,
+                        });
+                    }else{
+                        $('#agregarEquipo').modal('show');
+                        const tbody = document.querySelector('#tablaEquipos tbody');
+                        let contenido=``;
+                        respuesta.equipos.forEach(s => {
+                            contenido = contenido + `
+                                <tr class="fila-articulo" data-id="${s.id}">
+                                    <td><input type="checkbox"  class="check-item"></td>
+                                    <td>${s.numeroserie}</td>
+                                    <td>${s.descripcion}</td>
+                                    <td>${s.marca}</td>
+                                    <td>${s.modelo}</td>
+                                </tr>
+                            `;
+                        });
+                        tbody.innerHTML=contenido;
+                    }
+                   
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se han podido obtener los equipos',
+                });
+            });
+    }
+
+    $("#formBajaEquipo").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/equipos/baja',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha dado de baja de forma correcta el equipo ${ob.equipo.numeroserie}`,
+                            });
+                            setTimeout(()=>{
+                                location.reload()
+                            },1000)
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: ob.mensaje,
+                            });
+                        }
+                        $('#bajaEquipo').modal('hide');
+                    }
+                });
+    });
+    $("#formEditarEquipo").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/equipos/actualizar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha modificado de forma correcta el equipo ${ob.equipo.numeroserie}`,
+                            });
+                            setTimeout(()=>{
+                                location.reload()
+                            },1000)
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: ob.mensaje,
+                            });
+                        }
+                        $('#editarEquipo').modal('hide');
+                    }
+                });
+    });
+    $(document).on('click', '.btnEditarAsistencia', function() {
+            const id = this.dataset.id;
+            const fila = this.closest('tr');
+            $.get(
+                '/lecturas/asistencias/obtener',
+                {id:id},
+                function (respuesta) {
+                    $('#editarAsistencia').modal('show');
+                    let fecha=respuesta.asistencia.fechaprevista.split('T');
+                    document.getElementById('fechaprevista').value=fecha[0]
+                    document.getElementById('descripcion').value=respuesta.asistencia.descripcion
+                    document.getElementById('idAsistencia').value=respuesta.asistencia.id
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido obtener la asistencia',
+                });
+            });
+    });
+    $(document).on('click', '.btnEliminarAsistencia', function() {
+            const id = this.dataset.id;
+            const fila = this.closest('tr');
+            $.get(
+                '/lecturas/asistencias/eliminar',
+                {id:id},
+                function (respuesta) {
+                    //fila.remove();
+                   
+                    $(document).Toasts('create', {
+                        class: 'bg-success',
+                        title: 'Correcto',
+                        subtitle: 'exito',
+                        body: respuesta.message,
+                    });
+                    setTimeout(() => {
+                            location.reload();
+                    },1000);
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido eliminar la asistencia',
+                });
+            });
+    });
+    $(document).on('click', '.btnEliminarEquipo', function() {
+            const id = this.dataset.id;
+            const fila = this.closest('tr');
+            $.get(
+                '/lecturas/equipo/eliminar',
+                {id:id},
+                function (respuesta) {
+                    //fila.remove();
+                   
+                    $(document).Toasts('create', {
+                        class: 'bg-success',
+                        title: 'Correcto',
+                        subtitle: 'exito',
+                        body: respuesta.message,
+                    });
+                    setTimeout(() => {
+                            location.reload();
+                    },1000);
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido eliminar el equipo',
+                });
+            });
+    });
+</script>

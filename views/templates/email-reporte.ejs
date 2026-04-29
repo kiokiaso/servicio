@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        .body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 600px; background-color: #ffffff; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .header { background-color: #0067c6; padding: 20px; text-align: center; color: #ffffff; }
+        .logo-img { max-width: 180px; margin-bottom: 15px; }
+        .content { padding: 30px; color: #444444; line-height: 1.6; }
+        .details { background-color: #f1f6fb; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #0067c6; }
+        .footer { background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #777777; border-top: 1px solid #eeeeee; }
+        .badge { display: inline-block; padding: 4px 8px; background: #eef4ff; color: #0067c6; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <!-- Apartado para el Logo -->
+            <img src="https://grupoexi.com/wp-content/uploads/2025/08/LOGO-EXI-PNG_3.png" alt="Grupo Exi" class="logo-img">
+            <h2 style="margin:0; font-size: 22px;">Servicio Finalizado</h2>
+            <p style="margin:5px 0 0 0; opacity: 0.9;">Aviso: <%= folio %></p>
+        </div>
+        
+        <div class="content">
+            <!-- Saludo Personalizado según el Rol -->
+            <% if (rol === 'cliente') { %>
+                <h3>Estimado(a) <%= destinatario %>,</h3>
+                <p>Le informamos que el aviso relacionado con su solicitud ha sido <strong>concluida exitosamente</strong>.</p>
+            <% } else if (rol === 'coordinador') { %>
+                <h3>Hola, Coordinador(a),</h3>
+                <p>Se ha finalizado un aviso bajo su supervisión. Se adjunta el reporte para validación interna.</p>
+            <% } else { %>
+                <h3>Buen trabajo, <%= destinatario %>,</h3>
+                <p>Has finalizado correctamente el aviso. Se adjunta una copia del reporte enviado al cliente para tus registros.</p>
+            <% } %>
+            
+            <div class="details">
+                <div class="badge">Resumen del servicio</div><br><br>
+                • <strong>Cliente:</strong> <%= cliente %><br>
+                • <strong>Ubicación:</strong> <%= ubicacion %><br>
+                • <strong>Técnico:</strong> <%= tecnico %><br>
+                • <strong>Fecha de cierre:</strong> <%= fechaCierre %>
+            </div>
+
+            <p>Adjunto encontrará el <strong>Reporte de Servicio del aviso</strong> con el desglose de trabajos, lecturas y refacciones.</p>
+
+            <% if (rol === 'cliente') { %>
+                <p>Si tiene alguna duda adicional, por favor contáctenos mencionando su número de folio.</p>
+            <% } %>
+        </div>
+
+        <div class="footer">
+            Este es un mensaje automático generado por el Sistema de Servicio Técnico de <strong>Grupo Exi</strong>.<br>
+            © <%= new Date().getFullYear() %> Todos los derechos reservados.
+        </div>
+    </div>
+</body>
+</html>

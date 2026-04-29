@@ -1,0 +1,609 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+<link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+<style>
+  :root { --crm-primary: #2c3e50; --crm-accent: #3498db; }
+  body { background-color: #f8f9fc; font-family: 'Inter', sans-serif; }
+  .card { border: none; border-radius: 12px; transition: all 0.3s; }
+  .shadow-crm { box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1) !important; }
+  .nav-tabs-custom .nav-link { border: none; color: #a1a1a1; font-weight: 600; padding: 1rem 1.5rem; }
+  .nav-tabs-custom .nav-link.active { color: var(--crm-accent); background: transparent; border-bottom: 3px solid var(--crm-accent); }
+  #mainMap { height: 400px; border-radius: 0 0 12px 12px; z-index: 1; }
+  .info-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #95a5a6; margin-bottom: 2px; }
+  .info-value { font-weight: 600; color: var(--crm-primary); }
+</style>
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <div class="float-left">
+                        <h3 class="font-weight-bold text-dark mb-0">
+                            <%=cliente.razonsocial%>
+                        </h3>
+                    </div>
+                    <div class="float-left pl-3">
+                        <span class="badge badge-pill <%= cliente.activo ? 'badge-success' : 'badge-danger' %> px-3 py-2">
+                            <%= cliente.activo ? '● Cuenta Activa' : '● Inactiva' %>
+                        </span>
+                        <% if(cliente.moroso) { %>
+                            <div class="text-danger small mt-1 font-weight-bold"><i class="fas fa-exclamation-circle"></i> MOROSO</div>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/clientes">Clientes</a></li>
+                        <li class="breadcrumb-item active">Ficha</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+        <% }) %>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <!-- Columna Izquierda: Información y Pestañas -->
+            <div class="col-lg-8">
+            <div class="card shadow-crm mb-4">
+                <ul class="nav nav-tabs nav-tabs-custom" id="crmTab" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#general">Perfil General</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ubicaciones">Ubicaciones</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#contactos">Contactos</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#equipos">Equipos Técnico</a></li>
+                </ul>
+                
+                <div class="tab-content p-4">
+                    <!-- PESTAÑA GENERAL -->
+                    <div class="tab-pane fade show active" id="general">
+                        <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="info-label text-accent">RFC / Identificación</div>
+                            <div class="info-value"><%= cliente.rfc %></div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="info-label text-accent">Tipo de Servicio</div>
+                            <div class="badge badge-light border text-primary"><%= cliente.tipo %></div>
+                        </div>
+                        <div class="col-12 mb-4">
+                            <div class="info-label text-accent">Dirección Fiscal</div>
+                            <div class="info-value"><%= cliente.direccion %></div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="info-label text-accent">Teléfono</div>
+                            <div class="info-value"><i class="fas fa-phone-alt mr-2 text-muted"></i><%= cliente.telefono %></div>
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <div class="info-label text-accent">Correo Electrónico</div>
+                            <div class="info-value text-primary"><i class="far fa-envelope mr-2 text-muted"></i><%= cliente.email %></div>
+                        </div>
+                        </div>
+                        <hr>
+                        <div class="row pt-2">
+                        <div class="col-md-6">
+                            <div class="info-label">Horario de Atención</div>
+                            <div class="info-value font-weight-normal"><i class="far fa-clock mr-1 text-muted"></i> <%= cliente.horario || 'No definido' %></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-label">Ruta Asignada</div>
+                            <div class="info-value text-info"><i class="fas fa-truck mr-1"></i> <%= cliente.ruta %></div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA UBICACIONES -->
+                    <div class="tab-pane fade" id="ubicaciones">
+                        <div class="table-responsive">
+                        <table class="table table-borderless table-hover">
+                            <thead class="text-muted small border-bottom">
+                            <tr>
+                                <th>SITIO</th>
+                                <th>ESTADO</th>
+                                <th>OFICINA POLIZA</th>
+                                <th class="text-right">ACCIONES</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <% cliente.ubicaciones.forEach(u => { %>
+                                <tr class="border-bottom">
+                                <td>
+                                    <div class="font-weight-bold mb-0"><%= u.nombre %></div>
+                                    <small class="text-muted"><%= u.direccion %></small>
+                                </td>
+                                <td class="align-middle">
+                                    <span class="badge badge-pill badge-<%= u.activo ? 'soft-success' : 'soft-secondary' %>">
+                                    <%= u.activo ? 'Activa' : 'Off' %>
+                                    </span>
+                                </td>
+                                <td class="align-middle text-muted"><%= u.oficinaPoliza || '-' %></td>
+                                <td class="text-right align-middle">
+                                    <button class="btn btn-sm btn-light shadow-sm" onclick="showLocInMap('<%= u.coordenadas %>', '<%= u.nombre %>')">
+                                    <i class="fas fa-map-pin text-primary"></i>
+                                    </button>
+                                </td>
+                                </tr>
+                            <% }) %>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA CONTACTOS -->
+                    <div class="tab-pane fade" id="contactos">
+                        <div class="card shadow-crm">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Contactos Clave</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush">
+                                    <% cliente.ubicaciones.forEach(c => { %>
+                                    <li class="list-group-item border-0 px-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-soft-primary text-primary mr-3 p-2 rounded-circle">
+                                            <i class="fas fa-user-tie"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-weight-bold mb-0 small"><%= c.nombre %></div>
+                                            <div class="text-muted extra-small" style="font-size: 11px;"><%= c.direccion %> | <%= c.oficina %></div>
+                                        </div>
+                                        </div>
+                                    </li>
+                                    <% }) %>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA EQUIPOS TÉCNICOS -->
+                    <div class="tab-pane fade" id="equipos" role="tabpanel">
+                        <!-- Barra de Herramientas: Título y Buscador -->
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-6">
+                                <h5 class="text-secondary font-weight-bold mb-0">Inventario Instalado</h5>
+                                <span class="badge badge-pill badge-light border text-muted">
+                                    <span id="equipos-count"><%= cliente.ubicaciones.length %></span> Equipos en total
+                                </span>
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <div class="input-group shadow-sm">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-white border-right-0 text-muted">
+                                            <!-- Icono de lupa nativo o SVG -->
+                                            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-search" fill="currentColor" xmlns="http://www.w3.org">
+                                            <path fill-rule="evenodd" d="M10.442 10.442a1 1 0 0 1 1.415 0l3.85 3.85a1 1 0 0 1-1.414 1.415l-3.85-3.85a1 1 0 0 1 0-1.415z"/>
+                                            <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="searchEquipos" class="form-control border-left-0 pl-0" placeholder="Filtrar por serie, marca o modelo...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grid de Equipos -->
+                        <div class="row" id="equiposGrid">
+                            <% cliente.ubicaciones.forEach(function(e) { %>
+                                <div class="col-md-6 col-xl-4 mb-4 equipo-card" 
+                                    data-search="<%= e.nombre.toLowerCase() %> <%= e.nombre.toLowerCase() %> <%= e.nombre.toLowerCase() %>">
+                                    <div class="card h-100 shadow-sm border-0 border-left-accent shadow-hover">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <div>
+                                                <div class="info-label">Número de Serie</div>
+                                                <div class="h6 font-weight-bold text-primary mb-0"><%= e.nombre %></div>
+                                                </div>
+                                                <div class="text-muted">
+                                                <!-- Icono de CPU/Hardware -->
+                                                    <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-cpu" fill="currentColor" xmlns="http://www.w3.org">
+                                                        <path fill-rule="evenodd" d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0zm-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3h-7zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+
+                                            <div class="row no-gutters mb-3">
+                                                <div class="col-6">
+                                                <div class="info-label">Marca</div>
+                                                <div class="info-value small text-dark"><%= e.nombre %></div>
+                                                </div>
+                                                <div class="col-6 pl-2">
+                                                <div class="info-label">Modelo</div>
+                                                <div class="info-value small text-dark"><%= e.nombre %></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-2 bg-light rounded mb-2 border">
+                                                <div class="info-label text-accent font-weight-bold">Ubicación</div>
+                                                <div class="info-value small text-muted">
+                                                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-geo-alt-fill mr-1" fill="currentColor" xmlns="http://www.w3.org">
+                                                        <path fill-rule="evenodd" d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                                    </svg>
+                                                    <%= e.nombre %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+
+                        <!-- Mensaje de no resultados -->
+                        <div id="noResults" class="text-center py-5 d-none">
+                            <p class="text-muted">No se encontraron equipos que coincidan con la búsqueda.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Columna Derecha: Mapa y Contactos -->
+            <div class="col-lg-4">
+                <!-- Card del Mapa -->
+                <div class="card shadow-crm mb-4 overflow-hidden">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Geolocalización</h6>
+                    <span id="map-status" class="badge badge-light">Sincronizado</span>
+                    </div>
+                    <div id="mainMap"></div>
+                    <div class="card-footer bg-white border-0 small text-center text-muted">
+                        <i class="fas fa-info-circle mr-1"></i> Arrastra el marcador para corregir la posición.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR ARTICULO -->
+<div class="modal fade" id="editarArticulo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearArticuloLabel">Editar Articulo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/almacen/articulos/actualizar" method="POST"
+                    id="formCrearArticulo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsArticulo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresArticulo"></div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="codigo" class="col-sm-2 col-form-label">Código*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="codigo" name="codigo"
+                                value="<%=articulo.codigo%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="clavealterna" class="col-sm-2 col-form-label">Clave Alterna*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="clavealterna" name="clavealterna"
+                                value="<%=articulo.clavealterna%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="descripcion" class="col-sm-2 col-form-label">Descripción*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="descripcion" name="descripcion"
+                                required> <%=articulo.descripcion%></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="marca" class="col-sm-2 col-form-label">Marca*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="marca" name="marca" value="<%=articulo.marca%>"
+                                required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="modelo" class="col-sm-2 col-form-label">Modelo*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="modelo" name="modelo"
+                                value="<%=articulo.modelo%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="garantia" class="col-sm-2 col-form-label">Garantia(cantidad en meses)*</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="garantia" name="garantia"
+                                value="<%=articulo.garantia%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="preciopublico" class="col-sm-2 col-form-label">Precio Público*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="preciopublico"
+                                name="preciopublico" value="<%=articulo.preciopublico%>" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="stockMinimo" class="col-sm-2 col-form-label">Stock Mínimo*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="stockMinimo" name="stockMinimo"
+                                value="<%=articulo.stockMinimo%>" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="rendimiento" class="col-sm-2 col-form-label">Rendimiento*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="rendimiento" name="rendimiento"
+                                value="<%=articulo.rendimiento%>" placeholder="0" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" value="<%=articulo.id%>" class="form-control d-none" name="id" id="id">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../partials/scripts/comun')%>
+    <!-- DataTables  & Plugins -->
+    <script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+    <script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+    <script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+    <script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+    <script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Geocoder -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<script>
+  // Variable global para el mapa
+  let map, marker;
+
+  // 2. Lógica del Buscador de Equipos
+  $(document).ready(function() {
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
+        if (map) {
+            setTimeout(() => {
+            map.invalidateSize();
+            }, 300);
+        }
+    });
+    //initMap();
+    $("#searchEquipos").on("keyup", function() {
+      const value = $(this).val().toLowerCase();
+      let visibleCount = 0;
+
+      $(".equipo-card").each(function() {
+        const isMatch = $(this).data("search").indexOf(value) > -1;
+        $(this).toggle(isMatch);
+        if (isMatch) visibleCount++;
+      });
+
+      $("#equipos-count").text(visibleCount);
+      $("#noResults").toggleClass("d-none", visibleCount > 0);
+    });
+  });
+
+  // 3. Inicialización del Mapa
+    function initMap() {
+
+        if (typeof L === 'undefined') {
+            console.error("Leaflet no cargó");
+            return;
+        }
+
+        let lat = 19.4326;
+        let lng = -99.1332;
+
+        const coords = "<%= cliente.coordenadas %>";
+
+        if (coords && coords.includes(',')) {
+            const parts = coords.split(',');
+            lat = parseFloat(parts[0]);
+            lng = parseFloat(parts[1]);
+        }
+
+        map = L.map('mainMap').setView([lat, lng], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        const markers = L.markerClusterGroup();
+
+        // Cliente
+        markers.addLayer(
+            L.marker([lat, lng]).bindPopup("<b><%= cliente.razonsocial %></b>")
+        );
+
+       
+
+        map.addLayer(markers);
+
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 300);
+    }
+
+// IMPORTANTE
+window.addEventListener('load', initMap);
+  /*function initMap() {
+    // Verificación de seguridad para evitar "L is not defined"
+    if (typeof L === 'undefined') return;
+
+    const initialCoords = "<%= cliente.coordenadas %>";
+    const clienteDireccion = "<%= cliente.direccion %>";
+    let lat, lng;
+    
+    // Validar si existen coordenadas válidas
+    if (!initialCoords || initialCoords === "" || initialCoords === "undefined") {
+        lat = 19.4326; lng = -99.1332; // CDMX por defecto
+        geocodeAddress(clienteDireccion);
+    } else {
+        const parts = initialCoords.split(',');
+        lat = parseFloat(parts[0]);
+        lng = parseFloat(parts[1]);
+    }
+
+    // Crear mapa
+    map = L.map('mainMap').setView([lat, lng], 16);
+
+    // URL de capas corregida (CartoDB Light es más elegante para CRM)
+    L.tileLayer('https://{s}://{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    // Marcador
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+    marker.on('dragend', function() {
+      const pos = marker.getLatLng();
+      saveNewCoords(pos.lat, pos.lng);
+    });
+  }*/
+
+  // 4. Geocodificación (Dirección a Coordenadas)
+  function geocodeAddress(address) {
+    if (!address) return;
+    const geocoder = L.Control.Geocoder.nominatim();
+
+    geocoder.geocode(address, function(results) {
+            if (results.length > 0) {
+                const res = results[0];
+                map.setView(res.center, 15);
+                marker.setLatLng(res.center);
+                saveNewCoords(res.center.lat, res.center.lng);
+            }
+        });
+    }
+    async function saveNewCoords(lat, lng) {
+        const status = document.getElementById('map-status');
+        if (!status) return;
+
+        status.className = "badge badge-warning text-white";
+        status.innerText = "Guardando...";
+
+        try {
+        const response = await fetch('/cliente/update-coordinates', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+            id: "<%= cliente.id %>", 
+            coordenadas: `${lat},${lng}` 
+            })
+        });
+
+        if(response.ok) {
+            status.className = "badge badge-success text-white";
+            status.innerText = "Actualizado";
+            setTimeout(() => { status.innerText = "Sincronizado"; }, 2000);
+        }
+        } catch (e) {
+        status.className = "badge badge-danger text-white";
+        status.innerText = "Error de conexión";
+        }
+    }
+</script>
+<!--<script>
+
+  $(document).ready(function() {
+    $("#searchEquipos").on("keyup", function() {
+      const value = $(this).val().toLowerCase();
+      let visibleCount = 0;
+
+      $(".equipo-card").filter(function() {
+        const isMatch = $(this).data("search").indexOf(value) > -1;
+        $(this).toggle(isMatch);
+        if (isMatch) visibleCount++;
+      });
+
+      // Actualizar contador y mensaje de error
+      $("#equipos-count").text(visibleCount);
+      $("#noResults").toggleClass("d-none", visibleCount > 0);
+    });
+  });
+  let map, marker;
+  const initialCoords = "<%= cliente.coordenadas %>";
+  const clienteDireccion = "<%= cliente.direccion %>";
+
+  function initMap() {
+    let lat, lng;
+    
+    // Si no hay coordenadas, usamos una por defecto (ej. CDMX) pero buscamos la dirección
+    if (!initialCoords || initialCoords === "") {
+        lat = 19.4326; lng = -99.1332;
+        geocodeAddress(clienteDireccion);
+    } else {
+        [lat, lng] = initialCoords.split(',').map(Number);
+    }
+
+    map = L.map('mainMap').setView([lat, lng], 16);
+    L.tileLayer('https://{s}://{z}/{x}/{y}{r}.png').addTo(map);
+
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+
+    marker.on('dragend', function() {
+      const pos = marker.getLatLng();
+      saveNewCoords(pos.lat, pos.lng);
+    });
+  }
+
+  function geocodeAddress(address) {
+    const geocoder = L.Control.Geocoder.nominatim();
+    geocoder.geocode(address, (results) => {
+      if (results && results.length > 0) {
+        const res = results[0];
+        map.setView(res.center, 16);
+        marker.setLatLng(res.center);
+        saveNewCoords(res.center.lat, res.center.lng);
+      }
+    });
+  }
+
+  async function saveNewCoords(lat, lng) {
+    const status = document.getElementById('map-status');
+    status.className = "badge badge-warning text-white";
+    status.innerText = "Guardando...";
+
+    try {
+      const response = await fetch('/cliente/update-coordinates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: "<%= cliente.id %>", coordenadas: `${lat},${lng}` })
+      });
+      if(response.ok) {
+        status.className = "badge badge-success";
+        status.innerText = "Actualizado";
+      }
+    } catch (e) {
+      status.className = "badge badge-danger";
+      status.innerText = "Error";
+    }
+  }
+
+  window.onload = initMap;
+</script>-->

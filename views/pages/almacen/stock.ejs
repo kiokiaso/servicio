@@ -1,0 +1,340 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+<style type="text/css">
+    .contenedor-borde{
+        border:1px solid #0067c6;
+        padding: 20px;
+        margin:20px;
+        border-radius:5px;
+    }
+    .titulo-borde{
+        padding: 0 10px;
+        font-weight: bold;
+        color:#333;
+        background-color: white;
+        width: auto;
+    }
+    #datArticulos {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datArticulos .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+</style>
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Stock</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Almacén</a></li>
+                        <li class="breadcrumb-item active">Stock</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <!--<div class="col-12 float-left">
+                    <div class="col-md-4 float-left">
+                        <label for="articulos">Artículo*</label>
+                        <div class="col-sm-12">
+                            <input type="text" class="form-control" name="articulos" id="articulos" onKeyUp="buscarArticulos()" required> 
+                            <input type="text" name="idArticulo" id="idArticulo"  class="form-control d-none filtro-control">
+                            <div id="datArticulos" style="display: none;">
+
+                            </div>
+                        </div>
+                    </div> 
+                    <div class="col-md-3 float-left">
+                        <label>Almacén:</label>
+                        <select id="almacen" name="almacen" class="form-control filtro-control">
+                            <option value="Todos">Todos</option>
+                            <% almacenes.forEach(alm=>{ %>
+                                <option value="<%=alm.id%>"><%=alm.nombre%></option>
+                            <% })%>
+                        </select>
+                    </div>
+                    <div class="col-md-3 float-left">
+                        <a class="btn btn-success" href="/almacen/compras">Agregar Compra</a>
+                    </div>
+                </div>-->
+                <div class="col-12 d-flex align-items-end justify-content-between">
+                    <div class="col-md-4">
+                        <label for="articulos">Artículo*</label>
+                        <input type="text" class="form-control" name="articulos" id="articulos" onKeyUp="buscarArticulos()" required> 
+                        <input type="text" name="idArticulo" id="idArticulo"  class="form-control d-none filtro-control">
+                        <div id="datArticulos" style="display: none;"></div>
+                    </div> 
+
+                    <div class="col-md-3">
+                        <label for="almacen">Almacén:</label>
+                        <select id="almacen" name="almacen" class="form-control filtro-control">
+                            <option value="Todos">Todos</option>
+                            <% almacenes.forEach(alm=>{ %>
+                                <option value="<%=alm.id%>"><%=alm.nombre%></option>
+                            <% })%>
+                        </select>
+                    </div>
+
+                    <div class="col-md-auto ml-auto">
+                        <a class="btn btn-success" href="/almacen/compras">Agregar Compra</a>
+                    </div>
+                </div>
+            </div>
+            <!-- /.card-header -->
+            <div class="card-body p-2">
+                <table class="display table table-bordered table-striped w-100" id="stock">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Código</th>
+                      <th>Descripción</th>
+                      <th>Marca</th>
+                      <th>Stock</th>
+                      <th>Precio</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  </tbody>
+                </table>
+              </div>
+              <!-- /.card-body -->
+            </div>
+          <!-- /.card -->
+    </section>
+</div>
+
+
+<!-- MODAL CREAR ARTICULO -->
+<div class="modal fade" id="crearArticulo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearArticuloLabel">Crear Articulo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/almacen/articulos/crear" method="POST" id="formCrearArticulo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsArticulo" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresArticulo"></div>
+                    </div>
+                    
+                    <div class="form-group row">
+                        <label for="codigo" class="col-sm-2 col-form-label">Código*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="codigo" name="codigo"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="clavealterna" class="col-sm-2 col-form-label">Clave Alterna*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="clavealterna" name="clavealterna"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="descripcion" class="col-sm-2 col-form-label">Descripción*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="descripcion" name="descripcion"  required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="marca" class="col-sm-2 col-form-label">Marca*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="marca" name="marca"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="modelo" class="col-sm-2 col-form-label">Modelo*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="modelo" name="modelo"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipo" class="col-sm-2 col-form-label">Tipo</label>
+                        <div class="col-sm-10">
+                            <select name="tipo" id="tipo" class="form-control">
+                                <option value="REFACCION">Refacción</option>
+                                <option value="CONSUMIBLE">Consumible</option>
+                                <option value="EQUIPO">Equipo</option>
+                                <option value="ACCESORIO">Accesorio</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="garantia" class="col-sm-2 col-form-label">Garantia(cantidad en meses)*</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="garantia" name="garantia"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="preciopublico" class="col-sm-2 col-form-label">Precio Público*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="preciopublico" name="preciopublico" placeholder="0" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        var table = $('#stock').DataTable({
+            "processing":true,
+            "serverSide":true,
+            "ajax":{
+                "url":"/almacen/stock/tabla",
+                "type":"GET",
+                data: function(d){
+                    d.idArticulo=document.getElementById("idArticulo").value;
+                    d.idAlmacen=document.getElementById('almacen').value;
+                }
+            },
+            rowId: 'id',
+            stateSave: true,
+            columns: [
+                { data: 'id' },
+                { data: 'codigo'},
+                { data: 'descripcion' },
+                { data: 'marca' },
+                { data: 'stock' },
+                { data: null,
+                    render:function(data,type,row){
+                        return new Intl.NumberFormat('es-MX', {
+                                        style: 'currency',
+                                        currency: 'MXN'
+                                    }).format(row.costoPromedio); 
+                    }
+                 },
+                { data: null,
+                    render:function(data,type,row){
+                        return new Intl.NumberFormat('es-MX', {
+                                        style: 'currency',
+                                        currency: 'MXN'
+                                    }).format(row.totalPesos); 
+                    } },
+            ],
+            columnDefs: [
+                {
+                    searchable: false,
+                    orderable: false,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+        $('.filtro-control').on('change keyup', function() {
+            table.draw(); // Esto dispara la petición AJAX con los nuevos datos
+        });
+    });
+    function buscarArticulos(){
+        var articulos = document.getElementById("articulos").value;
+        var contenido="<div><strong>Clic a la serie para elegirla</strong></div>";
+        if(articulos.length>2){
+            $.get(
+                '/almacen/movimientos/articulo/buscar',
+                { articulos: articulos },
+                function (res) {
+                    res.articulo.forEach(art => {
+                        contenido = contenido + `<div style="cursor:pointer"><a class="suggest-element" data="${art.codigo} (${art.descripcion})"  id="${art.id}"  >${art.codigo}</a></div>`;
+
+                    });
+                    $('#datArticulos').fadeIn(1000).html(contenido);
+                    $('.suggest-element').on('click', function () {
+                                //Obtenemos la id unica de la sugerencia pulsada
+                    var id = $(this).attr('id');
+                                //Editamos el valor del input con data de la sugerencia pulsada
+                    $('#articulos').val($('#' + id).attr('data'));
+                                //Hacemos desaparecer el resto de sugerencias
+                    document.getElementById('datArticulos').innerHTML = "";
+                    document.getElementById('datArticulos').style = 'display:none';
+                                //alert('Has seleccionado el '+id+' '+$('#'+id).attr('data'));
+                    $('#idArticulo').val(id);
+                    $('#idArticulo').trigger('change'); 
+                });
+            }).fail(function (res) {
+                document.getElementById('datArticulos').innerHTML = "";
+                document.getElementById('datArticulos').style = 'display:none';
+                $('#idArticulo').val("");
+            });
+        }
+        else{
+            document.getElementById('datArticulos').innerHTML = "";
+            document.getElementById('datArticulos').style = 'display:none';
+            $('#idArticulos').val("");
+        }
+    }
+  function obtenerDato(id){
+    $.get(
+        '/maestros/autos/obtener',
+        {id:id},
+        function (respuesta) {
+            $('#editarAuto').modal('show');
+            document.getElementById('placaEditar').value=respuesta.data.placa;
+            document.getElementById('descripcionEditar').value=respuesta.data.descripcion;
+            document.getElementById('kilometrajeEditar').value=respuesta.data.kilometraje;
+            document.getElementById('idAuto').value=respuesta.data.id;
+        }
+    ).fail(function(res){
+        descErrores=descErrores+"No se ha encontrado el puesto";
+        document.getElementById('mostrarErroresAutoEditar').innerHTML=descErrores;
+        $('#errorsAutoEditar').show();
+        return false;
+    });
+  }
+</script>

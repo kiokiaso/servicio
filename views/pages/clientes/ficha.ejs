@@ -1,0 +1,2334 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+<link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+<style>
+  :root { --crm-primary: #2c3e50; --crm-accent: #3498db; }
+  body { background-color: #f8f9fc; font-family: 'Inter', sans-serif; }
+  .card { border: none; border-radius: 12px; transition: all 0.3s; }
+  .shadow-crm { box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1) !important; }
+  .nav-tabs-custom .nav-link { border: none; color: #a1a1a1; font-weight: 600; padding: 1rem 1.5rem; }
+  .nav-tabs-custom .nav-link.active { color: var(--crm-accent); background: transparent; border-bottom: 3px solid var(--crm-accent); }
+  #mainMap { height: 400px; border-radius: 0 0 12px 12px; z-index: 1; }
+  .info-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #95a5a6; margin-bottom: 2px; }
+  .info-value { font-weight: 600; color: var(--crm-primary); }
+  /* Estilos para que el foreach se vea fluido */
+    .contact-item {
+        border-color: #f0f2f5 !important;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .contact-item:hover {
+        border-color: #4e73df !important;
+        background-color: #f8faff !important;
+        transform: scale(1.01);
+        z-index: 2;
+    }
+
+    .hover-shadow:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .line-height-1 {
+        line-height: 1.2;
+    }
+
+    .bg-soft-primary {
+        background-color: rgba(78, 115, 223, 0.1) !important;
+    }
+
+    /* Ajuste para móviles: si la pantalla es pequeña, ocultar ubicación o ajustar botones */
+    @media (max-width: 576px) {
+        .contact-item {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+        .contact-item > .d-flex:last-child {
+            border-left: none !important;
+            border-top: 1px solid #eee;
+            width: 100%;
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            padding-top: 10px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+    }
+
+    #datSeries {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datSeries .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+</style>
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <div class="float-left">
+                        <h3 class="font-weight-bold text-dark mb-0" id="clienteRazonSocial">
+                            <i class="nav-icon bi-building"></i> <%=cliente.razonsocial%>
+                        </h3>
+                    </div>
+                    <div class="float-left pl-3">
+                        <span class="badge badge-pill <%= cliente.activo ? 'badge-success' : 'badge-danger' %> px-3 py-2">
+                            <%= cliente.activo ? '● Cuenta Activa' : '● Inactiva' %>
+                        </span>
+                        <% if(cliente.moroso) { %>
+                            <div class="text-danger small mt-1 font-weight-bold" id="activoMoroso"><i class="fas fa-exclamation-circle"></i> MOROSO</div>
+                        <% }else{%>
+                            <div class="text-danger small mt-1 font-weight-bold" id="activoMoroso"></div>
+                         <%} %>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/clientes">Clientes</a></li>
+                        <li class="breadcrumb-item active">Ficha</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+        <% }) %>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <!-- Columna Izquierda: Información y Pestañas -->
+            <div class="col-lg-8">
+            <div class="card shadow-crm mb-4">
+                <ul class="nav nav-tabs nav-tabs-custom" id="crmTab" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#general">Perfil General</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ubicaciones">Ubicaciones</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#contactos">Contactos</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#equipos">Equipos </a></li>
+                </ul>
+                
+                <div class="tab-content p-4">
+                    <!-- PESTAÑA GENERAL -->
+                    <div class="tab-pane fade show active" id="general">
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="info-label text-accent">código</div>
+                                <div class="info-value"  id="clienteCodigo"><%= cliente.codigo %></div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="info-label text-accent">RFC</div>
+                                <div class="info-value"  id="clienteRFC"><%= cliente.rfc %></div>
+                            </div>
+                            <div class="col-md-4 mb-4" id="clienteTipo">
+                                <div class="info-label text-accent">Tipo de Cliente</div>
+                                <% if(cliente.esPolizaForanea){ %>
+                                    <span class="badge badge-light border text-danger">Póliza entre exi</span> <%=cliente.oficina.nombre%>
+                                <% }else{
+                                    if(cliente.tipo=="ARRENDAMIENTO"){%>
+                                        <span class="badge-light border text-primary">ARRENDAMIENTO</span>
+                                    <%}if(cliente.tipo=="POLIZA"){%>
+                                        <span class="badge badge-light border text-success">Póliza de servicio</span>
+                                    <%} if(cliente.tipo=="TYM"){%>
+                                        <span class="badge badge-light border text-secondary">TYM</span>
+                                    <%}%>  
+                                <% } %>
+                                <!--<div class="badge badge-light border text-primary" id="clienteTipo"><%= cliente.tipo %></div>-->
+                            </div>
+                            <div class="col-12 mb-4">
+                                <div class="info-label text-accent">Dirección Fiscal</div>
+                                <div class="info-value" id="clienteDireccion"><%= cliente.direccion %></div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="info-label text-accent">Teléfono</div>
+                                <div class="info-value" id="clienteTelefono"><i class="fas fa-phone-alt mr-2 text-muted"></i><%= cliente.telefono %></div>
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <div class="info-label text-accent">Correo Electrónico</div>
+                                <div class="info-value text-primary" id="clienteEmail"><i class="far fa-envelope mr-2 text-muted"></i><%= cliente.email %></div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row pt-2">
+                            <div class="col-md-6">
+                                <div class="info-label">Horario de Atención</div>
+                                <div class="info-value font-weight-normal" id="clienteHorario"><i class="far fa-clock mr-1 text-muted"></i> <%= cliente.horario || 'No definido' %></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-label">Ruta Asignada</div>
+                                <div class="info-value text-info" id="clienteRuta"><i class="fas fa-truck mr-1"></i> <%= cliente.ruta.nombre %></div>
+                            </div>
+                        </div><hr>
+                        <div class="row pt-2">
+                            <div class="col-md-6">
+                                <% if(!cliente.esPolizaForanea){ %>
+                                    <button class="btn btn-warning" onclick="editar()">Editar</button>
+                                <% } %>
+                            </div>
+                            <div class="col-md-6">
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA UBICACIONES -->
+                    <div class="tab-pane fade" id="ubicaciones">
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-3">
+                                <% if(!cliente.esPolizaForanea){ %>
+                                    <button class="btn btn-success" onclick="maUbicacion()">Crear ubicación</button>
+                                <% } %>
+                            </div>
+                            <div class="col-md-3">
+                                <h5 class="text-secondary font-weight-bold mb-0">Ubicaciones</h5>
+                                <span class="badge badge-pill badge-light border text-muted">
+                                    <span id="ubicaciones-count"><%= cliente.ubicaciones.length %></span> Ubicaciones en total
+                                </span>
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <div class="input-group shadow-sm">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-white border-right-0 text-muted">
+                                            <!-- Icono de lupa nativo o SVG -->
+                                            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-search" fill="currentColor" xmlns="http://www.w3.org">
+                                            <path fill-rule="evenodd" d="M10.442 10.442a1 1 0 0 1 1.415 0l3.85 3.85a1 1 0 0 1-1.414 1.415l-3.85-3.85a1 1 0 0 1 0-1.415z"/>
+                                            <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="searchUbicaciones" class="form-control border-left-0 pl-0" placeholder="Filtrar por nombre o ruta...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-borderless table-hover" id="tablaUbicaciones">
+                                <thead class="text-muted small border-bottom">
+                                    <tr>
+                                        <th>SITIO</th>
+                                        <th>HORARIO</th>
+                                        <th>RUTA</th>
+                                        <th>OFICINA POLIZA</th>
+                                        <th class="text-right">ACCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <% cliente.ubicaciones.forEach(u => {
+                                    let mostrarFila = false;
+                                    let mostrarBotones = false;
+                                    if (cliente.esPolizaForanea) {
+                                        // Si es foránea, solo mostramos si la oficina de atención coincide con la sesión
+                                        if (u.oficinaAtencion && u.oficinaAtencion.id == oficinaElegida.id) {
+                                            mostrarFila = true;
+                                        }
+                                        if (u.oficinaAtencion && u.oficinaAtencion.id != oficinaElegida.id) {
+                                            mostrarBotones = true;
+                                        }
+                                    } else {
+                                        // Si no es foránea, mostramos todas
+                                        mostrarFila = true;
+                                        mostrarBotones=true
+                                    }
+                                    if(u.activo==0){
+                                        mostrarFila=false;
+                                    }
+                                    if(mostrarFila){ %>   
+                                    <tr class="border-bottom">
+                                        <td>
+                                            <div class="font-weight-bold mb-0"><%= u.nombre %></div>
+                                            <small class="text-muted"><%= u.direccion %></small>
+                                        </td>
+                                        <td class="align-middle">
+                                            <span class="badge badge-pill badge-<%= u.activo==1 ? 'soft-success' : 'soft-secondary' %>">
+                                            <%= u.horario %>
+                                            </span>
+                                        </td>
+                                        <td class="align-middle info-value text-info">
+                                            <i class="fas fa-truck mr-1"></i> <%= u.ruta.nombre %>
+                                        </td>
+                                        <td class="align-middle text-muted">
+                                            <% if(u.oficinaAtencion){ %>
+                                                <%=u.oficinaAtencion.nombre%>
+                                            <%}else{%>
+                                                -
+                                            <%} %>
+                                        </td>
+                                        <td class="text-right align-middle" style="white-space: nowrap; width: 1%;">
+                                            <% if(mostrarBotones){  %>
+                                                    
+                                                    <button class="btn btn-sm btn-light shadow-sm btnEliminar" data-coord='<%= u.coordenadas %>' data-nombre='<%= u.nombre %>' data-direccion='<%= u.direccion %>' data-id='<%= u.id %>'>
+                                                        <i class="fas fa-trash text-danger"></i>
+                                                    </button>
+                                                
+                                            <%} %>
+                                            <button class="btn btn-sm btn-light shadow-sm btnEditar" data-coord='<%= u.coordenadas %>' data-nombre='<%= u.nombre %>' data-direccion='<%= u.direccion %>' data-id='<%= u.id %>'>
+                                                <i class="fas fa-edit text-warning"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-light shadow-sm btnMapa" data-coord='<%= u.coordenadas %>' data-nombre='<%= u.nombre %>' data-direccion='<%= u.direccion %>' data-id='<%= u.id %>'>
+                                                <i class="fas fa-map-pin text-primary"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                        
+                                <%} }) %> 
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Mensaje de no resultados -->
+                        <div id="noResultsUbicacion" class="text-center py-5 d-none">
+                            <p class="text-muted">No se encontraron ubicaciones que coincidan con la búsqueda.</p>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA CONTACTOS -->
+                    <div class="tab-pane fade" id="contactos">
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-3">
+                                    <button class="btn btn-success" onclick="maContacto()">Crear Contacto</button>
+                            </div>
+                            <div class="col-md-3">
+                                <h5 class="text-secondary font-weight-bold mb-0">Contactos</h5>
+                                <span class="badge badge-pill badge-light border text-muted">
+                                    <span id="contactos-count"><%= cliente.contactos.length %></span> Contactos en total
+                                </span>
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <div class="input-group shadow-sm">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-white border-right-0 text-muted">
+                                            <!-- Icono de lupa nativo o SVG -->
+                                            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-search" fill="currentColor" xmlns="http://www.w3.org">
+                                            <path fill-rule="evenodd" d="M10.442 10.442a1 1 0 0 1 1.415 0l3.85 3.85a1 1 0 0 1-1.414 1.415l-3.85-3.85a1 1 0 0 1 0-1.415z"/>
+                                            <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="searchContactos" class="form-control border-left-0 pl-0" placeholder="Filtrar por nombre o email...">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card shadow-crm">
+                            <div class="card-body p-1">
+                                <div class="list-group list-group-flush" id="listaContactos">
+                                    <%
+                                    let contactosVisibles;
+                                    if(cliente.esPolizaForanea){
+                                        const idsConOficina = cliente.ubicaciones.filter(u =>{
+                                            const idOficinaAtencion = (u.oficinaAtencion && u.oficinaAtencion.id) ? u.oficinaAtencion.id : u.oficinaAtencion;
+                                            return idOficinaAtencion && idOficinaAtencion == oficinaElegida.id;
+                                        }).map(u => u.id.toString());
+                                        contactosVisibles = cliente.contactos.filter(c => {
+                                            const idUbicacionContacto = (c.ubicacion && c.ubicacion.id) ? c.ubicacion.id : c.ubicacion;
+                                            return idUbicacionContacto && idsConOficina.includes(idUbicacionContacto.toString());
+                                        });
+                                    }else{
+                                        contactosVisibles=cliente.contactos;
+                                    }
+                                    contactosVisibles.forEach(c => {
+                                        if(c.activo==1){ %>
+                                        <div class="contenedor-busqueda contacto-card"> 
+                                            <div class="contact-item p-3 mb-2 bg-white border rounded shadow-sm d-flex align-items-center justify-content-between hover-shadow transition-all " data-searchcont="<%=c.nombre.toLowerCase()%> <%=c.email.toLowerCase()%>" id="lista<%=c.id%>">
+                                                <div class="d-flex align-items-center overflow-hidden">
+                                                    <!-- Avatar Circular con Inicial o Icono -->
+                                                    <div class="avatar-sm d-flex align-items-center justify-content-center rounded-circle bg-soft-primary text-primary mr-3 shadow-none" 
+                                                        style="width: 48px; height: 48px; min-width: 48px; background-color: #eef2ff; border: 1px solid #e0e7ff;">
+                                                        <i class="fas fa-user-tie fa-lg"></i>
+                                                    </div>
+
+                                                    <!-- Cuerpo de Información -->
+                                                    <div class="line-height-1">
+                                                        <div class="d-flex align-items-center mb-1">
+                                                            <h6 class="font-weight-bold mb-0 mr-2 text-dark"><%=c.nombre%></h6>
+                                                            <span class="badge badge-pill bg-light text-muted border px-2 py-1" style="font-size: 10px; font-weight: 500;">
+                                                                <i class="fas fa-id-badge mr-1 text-primary"></i> <%=c.tipocontacto.nombre || 'S/P'%>
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        <!-- Fila de Datos Secundarios -->
+                                                        <div class="d-flex flex-wrap align-items-center text-muted" style="font-size: 12px; gap: 12px;">
+                                                            <span class="d-flex align-items-center">
+                                                                <i class="fas fa-envelope-open-text mr-1 text-info"></i> <%=c.email%>
+                                                            </span>
+                                                            <span class="d-flex align-items-center">
+                                                                <i class="fas fa-phone-alt mr-1 text-success"></i> <%=c.telefono%>
+                                                            </span>
+                                                            <span class="d-flex align-items-center w-100 mt-1">
+                                                                <i class="fas fa-map-marker-alt mr-1 text-danger"></i> 
+                                                                <span class="text-truncate" style="max-width: 250px;"><%=c.ubicacion.nombre || 'Ubicación no definida'%></span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Botones de Acción Minimalistas -->
+                                                <div class="d-flex border-left pl-3 ml-3" style="gap: 8px;">
+                                                    <button class="btn btn-sm btn-outline-warning border-0 rounded-circle btnEditarContacto" 
+                                                            data-id="<%=c.id%>" title="Editar contacto" style="width: 32px; height: 32px; padding: 0;">
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger border-0 rounded-circle btnEliminarContacto" 
+                                                            data-id="<%=c.id%>" title="Eliminar contacto" style="width: 32px; height: 32px; padding: 0;">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% } })  %>
+                                </div>
+                                <!-- Mensaje de no resultados -->
+                                <div id="noResultsContacto" class="text-center py-5 d-none">
+                                    <p class="text-muted">No se encontraron contactos que coincidan con la búsqueda.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PESTAÑA EQUIPOS TÉCNICOS -->
+                    <div class="tab-pane fade" id="equipos" role="tabpanel">
+                        <!-- Barra de Herramientas: Título y Buscador -->
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md-3">
+                                    <button class="btn btn-success" onclick="maEquipo()">Crear Equipo</button>
+                            </div>
+                            <div class="col-md-4">
+                                <h5 class="text-secondary font-weight-bold mb-0">Inventario Instalado</h5>
+                                <span class="badge badge-pill badge-light border text-muted">
+                                    <span id="equipos-count"><%= cliente.equipos.length %></span> Equipos en total
+                                </span>
+                            </div>
+                            <div class="col-md-5 mt-3 mt-md-0">
+                                <div class="input-group shadow-sm">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-white border-right-0 text-muted">
+                                            <!-- Icono de lupa nativo o SVG -->
+                                            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-search" fill="currentColor" xmlns="http://www.w3.org">
+                                            <path fill-rule="evenodd" d="M10.442 10.442a1 1 0 0 1 1.415 0l3.85 3.85a1 1 0 0 1-1.414 1.415l-3.85-3.85a1 1 0 0 1 0-1.415z"/>
+                                            <path fill-rule="evenodd" d="M6.5 12a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM13 6.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0z"/>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                    <input type="text" id="searchEquipos" class="form-control border-left-0 pl-0" placeholder="Filtrar por serie, marca o modelo...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grid de Equipos -->
+                        <div class="row" id="equiposGrid">
+                            <%
+                            let equiposVisibles;
+                                    if(cliente.esPolizaForanea){
+                                        const idsConOficina = cliente.ubicaciones.filter(u =>{
+                                            const idOficinaAtencion = (u.oficinaAtencion && u.oficinaAtencion.id) ? u.oficinaAtencion.id : u.oficinaAtencion;
+                                            return idOficinaAtencion && idOficinaAtencion == oficinaElegida.id;
+                                        }).map(u => u.id.toString());
+                                        equiposVisibles = cliente.equipos.filter(c => {
+                                            const idUbicacionContacto = (c.ubicacion && c.ubicacion.id) ? c.ubicacion.id : c.ubicacion;
+                                            return idUbicacionContacto && idsConOficina.includes(idUbicacionContacto.toString());
+                                        });
+                                    }else{
+                                        equiposVisibles=cliente.equipos;
+                                    } 
+                            equiposVisibles.forEach(function(e) { %>
+                                <div class="col-md-6 col-xl-4 mb-4 equipo-card" id="equipo<%=e.id%>"
+                                    data-search="<%= e.numeroserie.toLowerCase() %> <%= e.articulo.marca.toLowerCase() %> <%= e.articulo.modelo.toLowerCase() %> <%= e.ubicacion.nombre.toLowerCase() %>">
+                                    <div class="card h-100 shadow-sm border-0 border-left-accent shadow-hover">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <div>
+                                                <div class="info-label">Número de Serie</div>
+                                                <div class="h6 font-weight-bold text-primary mb-0"><%= e.numeroserie %></div>
+                                                </div>
+                                                <div class="text-muted">
+                                                <!-- Icono de CPU/Hardware -->
+                                                    <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-cpu" fill="currentColor" xmlns="http://www.w3.org">
+                                                        <path fill-rule="evenodd" d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0zm-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3h-7zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+
+                                            <div class="row no-gutters mb-3">
+                                                <div class="col-6">
+                                                <div class="info-label">Marca</div>
+                                                <div class="info-value small text-dark"><%= e.articulo.marca %></div>
+                                                </div>
+                                                <div class="col-6 pl-2">
+                                                <div class="info-label">Modelo</div>
+                                                <div class="info-value small text-dark"><%= e.articulo.modelo %></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-2 bg-light rounded mb-2 border">
+                                                <div class="info-label text-accent font-weight-bold">Ubicación</div>
+                                                <div class="info-value small text-muted">
+                                                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-geo-alt-fill mr-1" fill="currentColor" xmlns="http://www.w3.org">
+                                                        <path fill-rule="evenodd" d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                                    </svg>
+                                                    <%= e.ubicacion.nombre %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <div class="d-flex pl-3 ml-3" style="gap: 8px;">
+                                                    <button class="btn btn-sm btn-outline-warning border-0 rounded-circle btnEditarEquipo" 
+                                                            data-id="<%=e.id%>" title="Editar contacto" style="width: 32px; height: 32px; padding: 0;">
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger border-0 rounded-circle btnEliminarEquipo" 
+                                                            data-id="<%=e.id%>" title="Eliminar equipo" style="width: 32px; height: 32px; padding: 0;">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+
+                        <!-- Mensaje de no resultados -->
+                        <div id="noResults" class="text-center py-5 d-none">
+                            <p class="text-muted">No se encontraron equipos que coincidan con la búsqueda.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Columna Derecha: Mapa y Contactos -->
+            <div class="col-lg-4">
+                <!--MANEJO DE COORDENADAS EN EL MAPA, DATOS QUE SE TOMARÁN PARA LA INICIALIZACIÓN O MOSTRAR LOS PUNTOS EN EL MAPA DEPENDIENDO EN QUE PARTE DE LA PÁGINA SE ENCUENTRE, la actualización de coordenadas se hará solo en las ubicaciones, pero la inicialización será desde que se ingrese a la página-->
+                <div class="form-group">
+                    <input type="text" id="coordenadasCliente" value="<%=cliente.coordenadas%>" class="d-none">
+                    <input type="text" id="tipoCoordenada" value="cliente" class="d-none">
+                </div>
+
+                <!-- Card del Mapa -->
+                <div class="card shadow-crm mb-4 overflow-hidden">
+                    <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Geolocalización</h6>
+                    <span class="badge badge-light" id="nombreUbicacion">Cliente</span>
+                    <span id="map-status" class="badge badge-light">Sincronizado</span>
+                    </div>
+                    <div id="mainMap"></div>
+                    <div class="card-footer bg-white border-0 small text-center text-muted">
+                        <i class="fas fa-info-circle mr-1"></i> Arrastra el marcador para corregir la posición.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR CLIENTE -->
+<div class="modal fade" id="editarCliente" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarClienteLabel">Editar Cliente</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formEditarCliente">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsCliente"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresCliente"></div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="codigo" class="col-sm-2 col-form-label">Código SAE*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="codigo" name="codigo" value="<%=cliente.codigo%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="razonsocial" class="col-sm-2 col-form-label">Razón social*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="razonsocial" name="razonsocial" value="<%=cliente.razonsocial%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="rfc" class="col-sm-2 col-form-label">RFC*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="rfc" name="rfc" value="<%=cliente.rfc%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="email" class="col-sm-2 col-form-label">Email*</label>
+                        <div class="col-sm-10">
+                            <input type="email" class="form-control" id="email" name="email" value="<%=cliente.email%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="direccion" class="col-sm-2 col-form-label">Dirección*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" cols="3" id="direccion" name="direccion"  required><%=cliente.direccion%></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="telefono" class="col-sm-2 col-form-label">Teléfono*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="telefono" value="<%=cliente.telefono%>"name="telefono">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="horario" class="col-sm-2 col-form-label">Horario*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="horario" name="horario" value="<%=cliente.horario%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipo" class="col-sm-2 col-form-label">Tipo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipo" id="tipo" class="form-control">
+                                <% if(cliente.tipo==""){ %>
+                                    <option value="ARRENDAMIENTO" selected>Arrendamiento</option>
+                                <% }else{ %>
+                                    <option value="ARRENDAMIENTO">Arrendamiento</option>
+                                <% } %>
+                                <% if(cliente.tipo==""){ %>
+                                    <option value="POLIZA" selected>Póliza de servicio</option>
+                                <% }else{ %>
+                                    <option value="POLIZA">Póliza de servicio</option>
+                                <% } %>
+                                <% if(cliente.tipo==""){ %>
+                                    <option value="TYM" selected>TYM</option>
+                                <% }else{ %>
+                                    <option value="TYM">TYM</option>
+                                <% } %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="ruta" class="col-sm-2 col-form-label">Ruta*</label>
+                        <div class="col-sm-10">
+                            <select name="ruta" id="ruta" class="form-control">
+                                <% rutas.forEach(r=>{ if(r.id==cliente.ruta.id){ %> 
+                                    <option value="<%=r.id%>" selected><%=r.nombre%></option>
+                                <% }else{ %>
+                                    <option value="<%=r.id%>"><%=r.nombre%></option>
+                                <% }}) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="moroso" class="col-sm-2 col-form-label">¿Es moroso?*</label>
+                        <div class="col-sm-10">
+                            <select name="moroso" id="moroso" class="form-control">
+                                <option value="false" selected>No</option>
+                                <option value="true" >Si</option>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" value="<%=cliente.id%>" class="form-control d-none" name="id" id="id">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL AGREGAR UBICACIÓN -->
+<div class="modal fade" id="crearUbicacion" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarUbicacionLabel">Agregar ubicación</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formAgregarUbicacion">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsUbicacion"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresUbicacion"></div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="nombreUbicacion" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreUbicacion" name="nombreUbicacion" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="direccionUbicacion" class="col-sm-2 col-form-label">Dirección*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" cols="3" id="direccionUbicacion" name="direccionUbicacion"  required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="horarioUbicacion" class="col-sm-2 col-form-label">Horario*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="horarioUbicacion" name="horarioUbicacion" required>
+                        </div>
+                    </div>
+                    <div class="form-group row" >
+                        <label for="local" class="col-sm-2 col-form-label">¿Esta ubicación es local?*</label>
+                        <div class="col-sm-10">
+                            <select name="local" id="local" class="form-control">
+                                <option value="No">No</option>
+                                <option value="Si">Si</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row" >
+                        <label for="rutaUbicacion" class="col-sm-2 col-form-label">¿Esta ubicación será atendida por otra oficina?*</label>
+                        <div class="col-sm-10">
+                            <select name="atencion" id="atencion" class="form-control" onchange="atencionU()">
+                                <option value="No">No</option>
+                                <option value="Si">Si</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row d-none" id="mostrarRutaUbicacion">
+                        <label for="oficinas" class="col-sm-2 col-form-label">Oficina que atenderá la ubicación*</label>
+                        <div class="col-sm-10">
+                            <select name="oficinas" id="oficinas" class="form-control">
+                                <% oficinas.forEach(r=>{ if(r.id!=oficinaElegida.id){ %> 
+                                    <option value="<%=r.id%>" ><%=r.nombre%></option>
+                                <% }}) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="rutaUbicacion" class="col-sm-2 col-form-label">Ruta*</label>
+                        <div class="col-sm-10">
+                            <select name="rutaUbicacion" id="rutaUbicacion" class="form-control">
+                                <% rutas.forEach(r=>{ if(r.id==cliente.ruta.id){ %> 
+                                    <option value="<%=r.id%>" selected><%=r.nombre%></option>
+                                <% }else{ %>
+                                    <option value="<%=r.id%>"><%=r.nombre%></option>
+                                <% }}) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                <input type="text" class="d-none" name="clienteUbicacion" id="clienteUbicacion" value="<%=cliente.id%>">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR UBICACIÓN -->
+<div class="modal fade" id="editarUbicacion" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="EditarUbicacionLabel">Editar ubicación</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formEditarUbicacion">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsUbicacion"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresUbicacion"></div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="nombreUbicacionE" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreUbicacionE" name="nombreUbicacionE" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="direccionUbicacionE" class="col-sm-2 col-form-label">Dirección*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" cols="3" id="direccionUbicacionE" name="direccionUbicacionE"  required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="horarioUbicacionE" class="col-sm-2 col-form-label">Horario*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="horarioUbicacionE" name="horarioUbicacionE" required>
+                        </div>
+                    </div>
+                    <div class="form-group row" >
+                        <label for="localE" class="col-sm-2 col-form-label">¿Esta ubicación es local?*</label>
+                        <div class="col-sm-10">
+                            <select name="localE" id="localE" class="form-control">
+                                <option value="No">No</option>
+                                <option value="Si">Si</option>
+                            </select>
+                        </div>
+                    </div>
+                    <% if (cliente.esPolizaForanea){ %>
+                        <input type="text" class="d-none" name="atencionE" id="atencionE" value="Si">
+                        <input type="text" class="d-none" name="oficinasE" id="oficinasE" value="<%=oficinaElegida.id%>">
+                    <% }else{ %>
+                        <div class="form-group row" >
+                            <label for="atencionE" class="col-sm-2 col-form-label">¿Esta ubicación será atendida por otra oficina?*</label>
+                            <div class="col-sm-10">
+                                <select name="atencionE" id="atencionE" class="form-control" onchange="atencionUE()">
+                                    <option value="No">No</option>
+                                    <option value="Si">Si</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row d-none" id="mostrarRutaUbicacionE">
+                            <label for="oficinasE" class="col-sm-2 col-form-label">Oficina que atenderá la ubicación*</label>
+                            <div class="col-sm-10">
+                                <select name="oficinasE" id="oficinasE" class="form-control">
+                                    <% oficinas.forEach(r=>{ if(r.id!=oficinaElegida.id){ %> 
+                                        <option value="<%=r.id%>" ><%=r.nombre%></option>
+                                    <% }}) %>
+                                </select>
+                            </div>
+                        </div>
+                    <% } %>
+                    <div class="form-group row">
+                        <label for="rutaUbicacionE" class="col-sm-2 col-form-label">Ruta*</label>
+                        <div class="col-sm-10">
+                            <select name="rutaUbicacionE" id="rutaUbicacionE" class="form-control">
+                                <% rutas.forEach(r=>{  %>
+                                    <option value="<%=r.id%>"><%=r.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="d-none" name="idUbicacion" id="idUbicacion" >
+                <input type="text" class="d-none" name="foranea" id="foranea" value="<%=cliente.esPolizaForanea%>">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL AGREGAR CONTACTO -->
+<div class="modal fade" id="crearContacto" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarContactoLabel">Agregar Contacto</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formAgregarContacto">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsContacto"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresContacto"></div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="nombreContacto" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreContacto" name="nombreContacto" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="emailContacto" class="col-sm-2 col-form-label">Email*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="emailContacto" name="emailContacto" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="telefonoContacto" class="col-sm-2 col-form-label">Teléfono*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="telefonoContacto" name="telefonoContacto" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoContacto" class="col-sm-2 col-form-label">Puesto*</label>
+                        <div class="col-sm-10">
+                            <select name="tipoContacto" id="tipoContacto" class="form-control">
+                                <% tipoContacto.forEach(r=>{ %>
+                                    <option value="<%=r.id%>"><%=r.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="ubicacionContacto" class="col-sm-2 col-form-label">Ubicación*</label>
+                        <div class="col-sm-10">
+                            <select name="ubicacionContacto" id="ubicacionContacto" class="form-control">
+                                <% cliente.ubicaciones.forEach(u=>{
+                                    let mostrarFila = false;
+                                    if (cliente.esPolizaForanea) {
+                                        if (u.oficinaAtencion && u.oficinaAtencion.id == oficinaElegida.id) {
+                                            mostrarFila = true;
+                                        }
+                                    } else {
+                                        mostrarFila = true;
+                                    }
+                                    if(u.activo==0){
+                                        mostrarFila=false;
+                                    }
+                                    if(mostrarFila){ 
+                                    %>
+                                    <option value="<%=u.id%>"><%=u.nombre%></option>
+                                <% }}) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                <input type="text" class="d-none" name="clienteContacto" id="clienteContacto" value="<%=cliente.id%>">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR CONTACTO -->
+<div class="modal fade" id="editarContacto" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarContactoLabel">Editar Contacto</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formEditarContacto">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsContactoE"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresContactoE"></div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="nombreContactoE" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreContactoE" name="nombreContactoE" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="emailContacto" class="col-sm-2 col-form-label">Email*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="emailContactoE" name="emailContactoE" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="telefonoContactoE" class="col-sm-2 col-form-label">Teléfono*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="telefonoContactoE" name="telefonoContactoE" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoContactoE" class="col-sm-2 col-form-label">Puesto*</label>
+                        <div class="col-sm-10">
+                            <select name="tipoContactoE" id="tipoContactoE" class="form-control">
+                                <% tipoContacto.forEach(r=>{ %>
+                                    <option value="<%=r.id%>"><%=r.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="ubicacionContactoE" class="col-sm-2 col-form-label">Ubicación*</label>
+                        <div class="col-sm-10">
+                            <select name="ubicacionContactoE" id="ubicacionContactoE" class="form-control">
+                                <% cliente.ubicaciones.forEach(u=>{
+                                    let mostrarFila = false;
+                                    if (cliente.esPolizaForanea) {
+                                        if (u.oficinaAtencion && u.oficinaAtencion.id == oficinaElegida.id) {
+                                            mostrarFila = true;
+                                        }
+                                    } else {
+                                        mostrarFila = true;
+                                    }
+                                    if(u.activo==0){
+                                        mostrarFila=false;
+                                    }
+                                    if(mostrarFila){ 
+                                    %>
+                                    <option value="<%=u.id%>"><%=u.nombre%></option>
+                                <% }}) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="d-none" name="idContacto" id="idContacto">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL AGREGAR EQUIPO -->
+<div class="modal fade" id="crearEquipo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Agregar Equipo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formAgregarEquipo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="ubicacionEquipo" class="col-sm-2 col-form-label">Ubicación*</label>
+                        <div class="col-sm-10">
+                            <select name="ubicacionEquipo" id="ubicacionEquipo" class="form-control">
+                                <% cliente.ubicaciones.forEach(u=>{
+                                    let mostrarFila = false;
+                                    if (cliente.esPolizaForanea) {
+                                        if (u.oficinaAtencion && u.oficinaAtencion.id == oficinaElegida.id) {
+                                            mostrarFila = true;
+                                        }
+                                    } else {
+                                        mostrarFila = true;
+                                    }
+                                    if(u.activo==0){
+                                        mostrarFila=false;
+                                    }
+                                    if(mostrarFila){ 
+                                    %>
+                                    <option value="<%=u.id%>"><%=u.nombre%></option>
+                                <% }}) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="numeroserie" class="col-sm-2 col-form-label">Serie*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="numeroserie" name="numeroserie" required onkeyup="buscarSeries()">
+                            <div id="datSeries" style="display: none;">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="marca" class="col-sm-2 col-form-label">Marca*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="marca" name="marca" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="modelo" class="col-sm-2 col-form-label">Modelo*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="modelo" name="modelo" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="descripcion" class="col-sm-2 col-form-label">Descripción*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="descripcion" name="descripcion" required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="sitio" class="col-sm-2 col-form-label">Sitio de instalación*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="sitio" name="sitio" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="notas" class="col-sm-2 col-form-label">Notas*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="notas" name="notas" required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="fechainstalacion" class="col-sm-2 col-form-label">Fecha de instalación*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fechainstalacion" name="fechainstalacion" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tamano" class="col-sm-2 col-form-label">Tamaño*</label>
+                        <div class="col-sm-10">
+                            <select name="tamano" id="tamano" class="form-control">
+                                <option value="A3">A3</option>
+                                <option value="A4">A4</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipocolor" class="col-sm-2 col-form-label">Color o Monocromo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipocolor" id="tipocolor" class="form-control">
+                                <option value="Color">Color</option>
+                                <option value="Monocromo">Monocromo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoequipo" class="col-sm-2 col-form-label">Tipo de Equipo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipoequipo" id="tipoequipo" class="form-control">
+                                <option value="POLIZA">Póliza</option>
+                                <option value="TYM">TYM</option>
+                                <option value="ARRENDAMIENTO">Arrendamiento</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="plantilla" class="col-sm-2 col-form-label">Plantilla*</label>
+                        <div class="col-sm-10">
+                            <select name="plantillas" id="plantillas" class="form-control">
+                                <% plantillas.forEach(u=>{ %>
+                                    <option value="<%=u.id%>"><%=u.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                <input type="text" class="d-none" name="clienteEquipo" id="clienteEquipo" value="<%=cliente.id%>">
+                <input type="text" class="d-none" name="serieId" id="serieId">
+                <input type="text" class="d-none" name="articuloId" id="articuloId">
+                <input type="text" class="d-none" name="oficinaEquipo" id="oficinaEquipo" value="<%=cliente.oficina.id%>">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR EQUIPO -->
+<div class="modal fade" id="editarEquipo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarEquipoLabel">Agregar Equipo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formEditarEquipo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipoE"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipoE"></div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="equipoubicacionE" class="col-sm-2 col-form-label">Ubicación*</label>
+                        <div class="col-sm-10">
+                            <select name="equipoubicacionE" id="equipoubicacionE" class="form-control">
+                                <% cliente.ubicaciones.forEach(u=>{
+                                    let mostrarFila = false;
+                                    if (cliente.esPolizaForanea) {
+                                        if (u.oficinaAtencion && u.oficinaAtencion.id == oficinaElegida.id) {
+                                            mostrarFila = true;
+                                        }
+                                    } else {
+                                        mostrarFila = true;
+                                    }
+                                    if(u.activo==0){
+                                        mostrarFila=false;
+                                    }
+                                    if(mostrarFila){ 
+                                    %>
+                                    <option value="<%=u.id%>"><%=u.nombre%></option>
+                                <% }}) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="sitioE" class="col-sm-2 col-form-label">Sitio de instalación*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="sitioE" name="sitioE" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="notasE" class="col-sm-2 col-form-label">Notas*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="notasE" name="notasE" required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="fechainstalacionE" class="col-sm-2 col-form-label">Fecha de instalación*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fechainstalacionE" name="fechainstalacionE" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tamanoE" class="col-sm-2 col-form-label">Tamaño*</label>
+                        <div class="col-sm-10">
+                            <select name="tamanoE" id="tamanoE" class="form-control">
+                                <option value="A3">A3</option>
+                                <option value="A4">A4</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipocolorE" class="col-sm-2 col-form-label">Color o Monocromo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipocolorE" id="tipocolorE" class="form-control">
+                                <option value="Color">Color</option>
+                                <option value="Monocromo">Monocromo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoequipoE" class="col-sm-2 col-form-label">Tipo de Equipo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipoequipoE" id="tipoequipoE" class="form-control">
+                                <option value="POLIZA">Póliza</option>
+                                <option value="TYM">TYM</option>
+                                <option value="ARRENDAMIENTO">Arrendamiento</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="plantillaE" class="col-sm-2 col-form-label">Plantilla*</label>
+                        <div class="col-sm-10">
+                            <select name="plantillasE" id="plantillasE" class="form-control">
+                                <% plantillas.forEach(u=>{ %>
+                                    <option value="<%=u.id%>"><%=u.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="d-none" name="equipoId" id="equipoId">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../partials/scripts/comun')%>
+    <!-- DataTables  & Plugins -->
+    <script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+    <script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+    <script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+    <script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+    <script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+
+<!--<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCax07nLMeUuGzvQk5HbMSc8chV61aoe7w&libraries=places"></script>-->
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCax07nLMeUuGzvQk5HbMSc8chV61aoe7w&libraries=places,geometry,marker"></script>
+
+<script>
+    let map, marker, geocoder;
+    let currentType = 'cliente';
+    let currentId = "<%= cliente.id %>";
+    let filaEditar;
+    const puntos = [
+        { lat: 19.0414, lng: -98.2063 },
+        { lat: 19.0500, lng: -98.2100 },
+        { lat: 19.0600, lng: -98.2200 }
+    ];
+    $("#formEditarEquipo").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/clientes/equipo/actualizar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            const div = document.getElementById(`equipo${ob.equipo.id}`);
+                            
+                            div.innerHTML=`
+                                    <div class="card h-100 shadow-sm border-0 border-left-accent shadow-hover">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <div>
+                                                <div class="info-label">Número de Serie</div>
+                                                <div class="h6 font-weight-bold text-primary mb-0">${ob.equipo.numeroserie}</div>
+                                                </div>
+                                                <div class="text-muted">
+                                                <!-- Icono de CPU/Hardware -->
+                                                    <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-cpu" fill="currentColor" xmlns="http://www.w3.org">
+                                                        <path fill-rule="evenodd" d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0zm-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3h-7zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+
+                                            <div class="row no-gutters mb-3">
+                                                <div class="col-6">
+                                                <div class="info-label">Marca</div>
+                                                <div class="info-value small text-dark">${ob.equipo.articulo.marca}</div>
+                                                </div>
+                                                <div class="col-6 pl-2">
+                                                <div class="info-label">Modelo</div>
+                                                <div class="info-value small text-dark">${ob.equipo.articulo.modelo}</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-2 bg-light rounded mb-2 border">
+                                                <div class="info-label text-accent font-weight-bold">Ubicación</div>
+                                                <div class="info-value small text-muted">
+                                                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-geo-alt-fill mr-1" fill="currentColor" xmlns="http://www.w3.org">
+                                                        <path fill-rule="evenodd" d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                                    </svg>
+                                                    ${ob.equipo.ubicacion.nombre}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <div class="d-flex pl-3 ml-3" style="gap: 8px;">
+                                                    <button class="btn btn-sm btn-outline-warning border-0 rounded-circle btnEditarEquipo" 
+                                                            data-id="${ob.equipo.id}" title="Editar contacto" style="width: 32px; height: 32px; padding: 0;">
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger border-0 rounded-circle btnEliminarEquipo" 
+                                                            data-id="${ob.equipo.id}" title="Eliminar contacto" style="width: 32px; height: 32px; padding: 0;">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </div>
+                                        </div>
+                                    </div>
+                                `
+                            document.getElementById("formAgregarEquipo").reset();
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha modificado de forma correcta el equipo ${ob.equipo.numeroserie}`,
+                            });
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: ob.mensaje,
+                            });
+                        }
+                        $('#editarEquipo').modal('hide');
+                    }
+                });
+    });
+    $("#formAgregarEquipo").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/clientes/equipo/agregar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            const lista=document.getElementById("equiposGrid")
+                            const nuevoDiv=document.createElement("div");
+                            nuevoDiv.id=`equipo${ob.equipo.id}`
+                            nuevoDiv.className=`col-md-6 col-xl-4 mb-4 equipo-card`;
+                            nuevoDiv.dataset.search=`${ob.equipo.numeroserie.toLowerCase()} ${ob.equipo.articulo.marca.toLowerCase()} ${ob.equipo.articulo.modelo.toLowerCase()} ${ob.equipo.ubicacion.nombre.toLowerCase()}`
+                            //Revisar lo del div, para que salga de forma correcta al momento de agregar un equipo
+                            nuevoDiv.innerHTML=`
+                                    <div class="card h-100 shadow-sm border-0 border-left-accent shadow-hover">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between mb-3">
+                                                <div>
+                                                <div class="info-label">Número de Serie</div>
+                                                <div class="h6 font-weight-bold text-primary mb-0">${ob.equipo.numeroserie}</div>
+                                                </div>
+                                                <div class="text-muted">
+                                                <!-- Icono de CPU/Hardware -->
+                                                    <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-cpu" fill="currentColor" xmlns="http://www.w3.org">
+                                                        <path fill-rule="evenodd" d="M5 0a.5.5 0 0 1 .5.5V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2h1V.5a.5.5 0 0 1 1 0V2A2.5 2.5 0 0 1 14 4.5h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14v1h1.5a.5.5 0 0 1 0 1H14a2.5 2.5 0 0 1-2.5 2.5v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14h-1v1.5a.5.5 0 0 1-1 0V14A2.5 2.5 0 0 1 2 11.5H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2v-1H.5a.5.5 0 0 1 0-1H2A2.5 2.5 0 0 1 4.5 2V.5A.5.5 0 0 1 5 0zm-.5 3A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 3h-7zM5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3zM6.5 6a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+
+                                            <div class="row no-gutters mb-3">
+                                                <div class="col-6">
+                                                <div class="info-label">Marca</div>
+                                                <div class="info-value small text-dark">${ob.equipo.articulo.marca}</div>
+                                                </div>
+                                                <div class="col-6 pl-2">
+                                                <div class="info-label">Modelo</div>
+                                                <div class="info-value small text-dark">${ob.equipo.articulo.modelo}</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="p-2 bg-light rounded mb-2 border">
+                                                <div class="info-label text-accent font-weight-bold">Ubicación</div>
+                                                <div class="info-value small text-muted">
+                                                    <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-geo-alt-fill mr-1" fill="currentColor" xmlns="http://www.w3.org">
+                                                        <path fill-rule="evenodd" d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                                                    </svg>
+                                                    ${ob.equipo.ubicacion.nombre}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `
+                           
+                            lista.appendChild(nuevoDiv);
+                            document.getElementById("formAgregarEquipo").reset();
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha agregado de forma correcta el equipo ${ob.equipo.numeroserie}`,
+                            });
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: ob.mensaje,
+                            });
+                        }
+                        $('#crearEquipo').modal('hide');
+                    }
+                });
+    });
+    $("#formEditarContacto").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/clientes/contacto/actualizar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            const div = document.getElementById(`lista${ob.contacto.id}`);
+                            //const lista=document.getElementById("listaContactos")
+                            
+                            div.innerHTML=`
+                                        <div class="d-flex align-items-center overflow-hidden">
+                                            <!-- Avatar Circular con Inicial o Icono -->
+                                            <div class="avatar-sm d-flex align-items-center justify-content-center rounded-circle bg-soft-primary text-primary mr-3 shadow-none" 
+                                                style="width: 48px; height: 48px; min-width: 48px; background-color: #eef2ff; border: 1px solid #e0e7ff;">
+                                                <i class="fas fa-user-tie fa-lg"></i>
+                                            </div>
+
+                                            <!-- Cuerpo de Información -->
+                                            <div class="line-height-1">
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <h6 class="font-weight-bold mb-0 mr-2 text-dark">${ob.contacto.nombre}</h6>
+                                                    <span class="badge badge-pill bg-light text-muted border px-2 py-1" style="font-size: 10px; font-weight: 500;">
+                                                        <i class="fas fa-id-badge mr-1 text-primary"></i> ${ob.contacto.tipocontacto.nombre || 'S/P'}
+                                                    </span>
+                                                </div>
+                                                
+                                                <!-- Fila de Datos Secundarios -->
+                                                <div class="d-flex flex-wrap align-items-center text-muted" style="font-size: 12px; gap: 12px;">
+                                                    <span class="d-flex align-items-center">
+                                                        <i class="fas fa-envelope-open-text mr-1 text-info"></i> ${ob.contacto.email}
+                                                    </span>
+                                                    <span class="d-flex align-items-center">
+                                                        <i class="fas fa-phone-alt mr-1 text-success"></i> ${ob.contacto.telefono}
+                                                    </span>
+                                                    <span class="d-flex align-items-center w-100 mt-1">
+                                                        <i class="fas fa-map-marker-alt mr-1 text-danger"></i> 
+                                                        <span class="text-truncate" style="max-width: 250px;">${ob.contacto.ubicacion.nombre || 'Ubicación no definida'}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botones de Acción Minimalistas -->
+                                        <div class="d-flex border-left pl-3 ml-3" style="gap: 8px;">
+                                            <button class="btn btn-sm btn-outline-warning border-0 rounded-circle btnEditarContacto" 
+                                                    data-id="${ob.contacto.id}" title="Editar contacto" style="width: 32px; height: 32px; padding: 0;">
+                                                <i class="fas fa-pen"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger border-0 rounded-circle btnEliminarContacto" 
+                                                    data-id="${ob.contacto.id}" title="Eliminar contacto" style="width: 32px; height: 32px; padding: 0;">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>`
+                            //nuevoDiv.className=`contact-item p-3 mb-2 bg-white border rounded shadow-sm d-flex align-items-center justify-content-between hover-shadow transition-all`;
+                            //lista.appendChild(nuevoDiv);
+                            
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha actualizado de forma correcta el contacto ${ob.contacto.nombre}`,
+                            });
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: 'Ha ocurrido un error, no se ha podido actualizar los datos',
+                            });
+                        }
+                       $('#editarContacto').modal('hide');
+                    }
+                });
+    });
+    $("#formAgregarContacto").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/clientes/contacto/agregar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            const lista=document.getElementById("listaContactos")
+                            const nuevoDiv=document.createElement("div");
+                            nuevoDiv.id=`lista${ob.contacto.id}`
+                            nuevoDiv.innerHTML=`
+                                        <div class="d-flex align-items-center overflow-hidden">
+                                            <!-- Avatar Circular con Inicial o Icono -->
+                                            <div class="avatar-sm d-flex align-items-center justify-content-center rounded-circle bg-soft-primary text-primary mr-3 shadow-none" 
+                                                style="width: 48px; height: 48px; min-width: 48px; background-color: #eef2ff; border: 1px solid #e0e7ff;">
+                                                <i class="fas fa-user-tie fa-lg"></i>
+                                            </div>
+
+                                            <!-- Cuerpo de Información -->
+                                            <div class="line-height-1">
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <h6 class="font-weight-bold mb-0 mr-2 text-dark">${ob.contacto.nombre}</h6>
+                                                    <span class="badge badge-pill bg-light text-muted border px-2 py-1" style="font-size: 10px; font-weight: 500;">
+                                                        <i class="fas fa-id-badge mr-1 text-primary"></i> ${ob.contacto.tipocontacto.nombre || 'S/P'}
+                                                    </span>
+                                                </div>
+                                                
+                                                <!-- Fila de Datos Secundarios -->
+                                                <div class="d-flex flex-wrap align-items-center text-muted" style="font-size: 12px; gap: 12px;">
+                                                    <span class="d-flex align-items-center">
+                                                        <i class="fas fa-envelope-open-text mr-1 text-info"></i> ${ob.contacto.email}
+                                                    </span>
+                                                    <span class="d-flex align-items-center">
+                                                        <i class="fas fa-phone-alt mr-1 text-success"></i> ${ob.contacto.telefono}
+                                                    </span>
+                                                    <span class="d-flex align-items-center w-100 mt-1">
+                                                        <i class="fas fa-map-marker-alt mr-1 text-danger"></i> 
+                                                        <span class="text-truncate" style="max-width: 250px;">${ob.contacto.ubicacion.nombre || 'Ubicación no definida'}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botones de Acción Minimalistas -->
+                                        <div class="d-flex border-left pl-3 ml-3" style="gap: 8px;">
+                                            <button class="btn btn-sm btn-outline-warning border-0 rounded-circle btnEditarContacto" 
+                                                    data-id="${ob.contacto.id}" title="Editar contacto" style="width: 32px; height: 32px; padding: 0;">
+                                                <i class="fas fa-pen"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger border-0 rounded-circle btnEliminarContacto" 
+                                                    data-id="${ob.contacto.id}" title="Eliminar contacto" style="width: 32px; height: 32px; padding: 0;">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>`
+                            nuevoDiv.className=`contact-item p-3 mb-2 bg-white border rounded shadow-sm d-flex align-items-center justify-content-between hover-shadow transition-all`;
+                            lista.appendChild(nuevoDiv);
+
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha agregado de forma correcta el contacto ${ob.contacto.nombre}`,
+                            });
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: 'Ha ocurrido un error, no se ha podido agrgear el contacto',
+                            });
+                        }
+                        $('#crearContacto').modal('hide');
+                    }
+                });
+    });
+    $("#formEditarUbicacion").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/clientes/ubicacion/actualizar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                           
+                            // 3. Insertar las celdas (td)
+                            const celdaSitio = filaEditar.cells[0];
+                            const celdaEstado = filaEditar.cells[1];
+                            const celdaRuta = filaEditar.cells[2];
+                            const celdaPoliza = filaEditar.cells[3];
+                            const celdaAcciones = filaEditar.cells[4];
+
+                            // 4. Agregar el contenido a las celdas
+                            celdaSitio.innerHTML = `
+                                <div class="font-weight-bold mb-0">${ob.ubicacion.nombre}</div>
+                                <small class="text-muted">${ob.ubicacion.direccion}</small>
+                            `;
+                            celdaEstado.className="align-middle"
+                            ob.ubicacion.activo==1?celdaEstado.innerHTML = `<span class="badge badge-pill badge-soft-success">${ob.ubicacion.horario}</span>`:celdaEstado.innerHTML = ` <span class="badge badge-pill badge-soft-secondary">${ob.ubicacion.horario}</span>`;
+                            
+                            celdaRuta.className="align-middle info-value text-info";
+                            celdaRuta.innerHTML=`<i class="fas fa-truck mr-1"></i> ${ob.ubicacion.ruta.nombre}`;
+
+                            celdaPoliza.className="align-middle text-muted";
+                            if(document.getElementById('atencionE').value=="Si"){
+                                celdaPoliza.innerHTML=`${ob.ubicacion.oficinaAtencion.nombre}`
+                            }else{
+                                celdaPoliza.innerHTML='-'
+                            }
+                           // ob.ubicacion.oficinaAtencion!=null?celdaPoliza.innerHTML=`${ob.ubicacion.oficinaAtencion.nombre}`:'-'
+                            
+                            celdaAcciones.className = "text-right align-middle"; // Mantener tus clases
+                            celdaAcciones.style.whiteSpace = "nowrap"; // Evitar salto de línea
+                            celdaAcciones.innerHTML = `
+                                <button class="btn btn-sm btn-light shadow-sm btnEditar" data-id='${ob.ubicacion.id}'>
+                                    <i class="fas fa-edit text-warning"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light shadow-sm btnEliminar" data-id='${ob.ubicacion.id}'>
+                                    <i class="fas fa-trash text-danger"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light shadow-sm btnMapa" data-coord='${ob.ubicacion.coordenadas}' data-nombre='${ob.ubicacion.nombre}' data-direccion='${ob.ubicacion.direccion}' data-id='${ob.ubicacion.id}'>
+                                    <i class="fas fa-map-pin text-primary"></i>
+                                </button>
+                            `;
+                            setUbicacionMapa(ob.ubicacion.id,ob.ubicacion.coordenadas,ob.ubicacion.direccion,ob.ubicacion.nombre);
+                            
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha actualizado de forma correcta la ubicación ${ob.ubicacion.nombre}`,
+                            });
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: 'Ha ocurrido un error, no se ha podido actualizar los datos',
+                            });
+                        }
+                       $('#editarUbicacion').modal('hide');
+                    }
+                });
+    });
+    $("#formAgregarUbicacion").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/clientes/ubicacion/agregar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            const tabla = document.getElementById("tablaUbicaciones").getElementsByTagName('tbody')[0];
+
+                            // 2. Insertar una nueva fila al final (-1 significa la última posición)
+                            const nuevaFila = tabla.insertRow(-1);
+
+                            // 3. Insertar las celdas (td)
+                            const celdaSitio = nuevaFila.insertCell(0);
+                            const celdaEstado = nuevaFila.insertCell(1);
+                            const celdaRuta = nuevaFila.insertCell(2);
+                            const celdaPoliza = nuevaFila.insertCell(3);
+                            const celdaAcciones = nuevaFila.insertCell(4);
+
+                            // 4. Agregar el contenido a las celdas
+                            celdaSitio.innerHTML = `
+                                <div class="font-weight-bold mb-0">${ob.ubicacion.nombre}</div>
+                                <small class="text-muted">${ob.ubicacion.direccion}</small>
+                            `;
+                            celdaEstado.className="align-middle"
+                            ob.ubicacion.activo==1?celdaEstado.innerHTML = `<span class="badge badge-pill badge-soft-success">Activa</span>`:celdaEstado.innerHTML = ` <span class="badge badge-pill badge-soft-secondary">Eliminada</span>`;
+                            
+                            celdaRuta.className="align-middle info-value text-info";
+                            celdaRuta.innerHTML=`<i class="fas fa-truck mr-1"></i> ${ob.ubicacion.ruta.nombre}`;
+
+                            celdaPoliza.className="align-middle text-muted";
+                            ob.ubicacion.oficinaAtencion?celdaPoliza.innerHTML=`${ob.ubicacion.oficinaAtencion.nombre}`:
+                            
+                            celdaAcciones.className = "text-right align-middle"; // Mantener tus clases
+                            celdaAcciones.style.whiteSpace = "nowrap"; // Evitar salto de línea
+                            celdaAcciones.innerHTML = `
+                                <button class="btn btn-sm btn-light shadow-sm btnEditar" data-id='${ob.ubicacion.id}'>
+                                    <i class="fas fa-edit text-warning"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light shadow-sm btnEliminar" data-id='${ob.ubicacion.id}'>
+                                    <i class="fas fa-trash text-danger"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light shadow-sm btnMapa" data-coord='${ob.ubicacion.coordenadas}' data-nombre='${ob.ubicacion.nombre}' data-direccion='${ob.ubicacion.direccion}' data-id='${ob.ubicacion.id}'>
+                                    <i class="fas fa-map-pin text-primary"></i>
+                                </button>
+                            `;
+                            setUbicacionMapa(ob.ubicacion.id,ob.ubicacion.coordenadas,ob.ubicacion.direccion,ob.ubicacion.nombre);
+                            
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha agregado de forma correcta la ubicación ${ob.ubicacion.nombre}`,
+                            });
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: 'Ha ocurrido un error, no se ha podido actualizar los datos',
+                            });
+                        }
+                        $('#crearUbicacion').modal('hide');
+                    }
+                });
+    });
+    $("#formEditarCliente").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/clientes/actualizar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            document.getElementById('clienteRazonSocial').innerText=ob.data.razonsocial
+                            document.getElementById('clienteRFC').innerText=ob.data.rfc
+                            document.getElementById('clienteCodigo').innerText=ob.data.codigo
+                            let htmlTipo=`<div class="info-label text-accent">Tipo de Cliente</div>`;
+                            if(ob.data.tipo=="ARRENDAMIENTO"){
+                                htmlTipo+=`<span class="badge-light border text-primary">ARRENDAMIENTO</span>`;
+                            }if(ob.data.tipo=="POLIZA"){
+                                htmlTipo+=`<span class="badge badge-light border text-success">Póliza de servicio</span>`;
+                            } if(ob.data.tipo=="TYM"){
+                                htmlTipo+=`<span class="badge badge-light border text-secondary">TYM</span>`;
+                            }  
+                            document.getElementById('clienteTipo').innerHTML=htmlTipo
+                            document.getElementById('clienteDireccion').innerText=ob.data.direccion
+                            document.getElementById('clienteTelefono').innerHTML=`<i class="fas fa-phone-alt mr-2 text-muted"></i>${ob.data.telefono}`
+                            document.getElementById('clienteEmail').innerHTML=`<i class="far fa-envelope mr-2 text-muted"></i>${ob.data.email}`
+                            document.getElementById('clienteHorario').innerHTML=`<i class="far fa-clock mr-1 text-muted"></i>${ob.data.horario}`
+                            document.getElementById('clienteRuta').innerHTML=`<i class="fas fa-truck mr-1"></i>${ob.data.ruta.nombre}`
+                            if(document.getElementById("direccion").value!==ob.data.direccion){
+                                console.log("Entra")
+                                geocodeAddress(ob.data.direccion);
+                            }
+                            if(ob.data.moroso==true){
+                                document.getElementById("activoMoroso").innerHTML=`<i class="fas fa-exclamation-circle"></i> MOROSO`;
+                            }else{
+                                document.getElementById("activoMoroso").innerHTML=``;
+                            }
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: 'Se ha actualizado de forma correcta la información',
+                            });
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: 'Ha ocurrido un error, no se ha podido actualizar los datos',
+                            });
+                        }
+                        $('#editarCliente').modal('hide');
+                    }
+                });
+    });
+    function buscarSeries(){
+        var numero = document.getElementById("numeroserie").value;
+        var oficina = document.getElementById("oficinaEquipo").value;
+        var contenido="<div><strong>Clic a la serie para elegirla</strong></div>";
+        if(numero.length>2){
+            $.get(
+                '/almacen/series/buscar',
+                { numero: numero,oficina },
+                function (res) {
+                    res.series.forEach(s => {
+                        contenido = contenido + `<div style="cursor:pointer"><a class="suggest-element" data="${s.id}" serie="${s.serie}"  id="${s.id}" marca="${s.articulo.marca}" modelo="${s.articulo.modelo}" articulo="${s.articulo.id}" descripcion="${s.articulo.descripcion}" tipocolor="${s.articulo.tipocolor}" tamano="${s.articulo.tamano}" >${s.serie}</a></div>`;
+
+                    });
+                    $('#datSeries').fadeIn(1000).html(contenido);
+                    $('.suggest-element').on('click', function () {
+                                //Obtenemos la id unica de la sugerencia pulsada
+                        var id = $(this).attr('id');
+                        var marca = $(this).attr('marca');
+                        var modelo = $(this).attr('modelo');
+                        var articulo = $(this).attr('articulo');
+                        var descripcion = $(this).attr('descripcion');
+                        var tipocolor = $(this).attr('tipocolor');
+                        var tamano = $(this).attr('tamano');
+                        var serie = $(this).attr('serie');
+                        $('#numeroserie').val($('#' + id).attr('data'));
+                                    //Hacemos desaparecer el resto de sugerencias
+                        document.getElementById('datSeries').innerHTML = "";
+                        document.getElementById('datSeries').style = 'display:none';
+                                    //alert('Has seleccionado el '+id+' '+$('#'+id).attr('data'));
+                        $('#serieId').val(id);
+                        $('#articuloId').val(articulo);
+                        $('#marca').val(marca);
+                        $('#modelo').val(modelo);
+                        $('#descripcion').val(descripcion);
+                        $('#tipocolor').val(tipocolor);
+                        $('#tamano').val(tamano);
+                        $('#numeroserie').val(serie);
+                        //$('#idArticulo').trigger('change'); 
+                    });
+            }).fail(function (res) {
+                document.getElementById('datSeries').innerHTML = "";
+                document.getElementById('datSeries').style = 'display:none';
+                $('#serieId').val("");
+            });
+        }
+        else{
+            document.getElementById('datSeries').innerHTML = "";
+            document.getElementById('datSeries').style = 'display:none';
+            $('#serieId').val("");
+        }
+    }
+    function atencionU(){
+        if(document.getElementById('atencion').value=="Si"){
+            document.getElementById('mostrarRutaUbicacion').className="form-group row";
+        }else{
+            document.getElementById('mostrarRutaUbicacion').className="form-group row d-none";
+        }
+    }
+    function atencionUE(){
+        if(document.getElementById('atencionE').value=="Si"){
+            document.getElementById('mostrarRutaUbicacionE').className="form-group row";
+        }else{
+            document.getElementById('mostrarRutaUbicacionE').className="form-group row d-none";
+        }
+    }
+    $(document).on('click', '.btnMapa', function() {
+            const id = this.dataset.id;
+            const coords = this.dataset.coord;
+            const direccion = this.dataset.direccion;
+            const nombre = this.dataset.nombre;
+            setUbicacionMapa(id,coords,direccion,nombre);
+    });
+    $(document).on('click', '.btnEliminar', function() {
+            const id = this.dataset.id;
+            const fila = this.closest('tr');
+            $.get(
+                '/clientes/ubicacion/eliminar',
+                {id:id},
+                function (respuesta) {
+                    fila.remove();
+                    $(document).Toasts('create', {
+                        class: 'bg-success',
+                        title: 'Correcto',
+                        subtitle: 'exito',
+                        body: `Se ha eliminado la ubicación ${respuesta.data.nombre}`,
+                    });
+                    /*$('#editarAuto').modal('show');
+                    document.getElementById('placaEditar').value=respuesta.data.placa;
+                    document.getElementById('descripcionEditar').value=respuesta.data.descripcion;
+                    document.getElementById('kilometrajeEditar').value=respuesta.data.kilometraje;
+                    document.getElementById('idAuto').value=respuesta.data.id;*/
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido eliminar la ubicación',
+                });
+            });
+    });
+    $(document).on('click', '.btnEditar', function() {
+            const id = this.dataset.id;
+            const fila = this.closest('tr');
+            filaEditar=fila;
+            $.get(
+                '/clientes/ubicacion/obtener',
+                {id:id},
+                function (respuesta) {
+                    $('#editarUbicacion').modal('show');
+                    document.getElementById('idUbicacion').value=id;
+                    document.getElementById('nombreUbicacionE').value=respuesta.data.nombre;
+                    document.getElementById('direccionUbicacionE').value=respuesta.data.direccion;
+                    document.getElementById('horarioUbicacionE').value=respuesta.data.horario;
+                    document.getElementById('rutaUbicacionE').value=respuesta.data.ruta;
+                    if(respuesta.data.oficinaAtencion){
+                        document.getElementById('atencionE').value="Si";
+                            document.getElementById('mostrarRutaUbicacionE').className="form-group row";
+                        document.getElementById('oficinasE').value=respuesta.data.oficinaAtencion;
+                    }else{
+                        document.getElementById('atencionE').value="No";
+                        document.getElementById('mostrarRutaUbicacionE').className="form-group row d-none";
+                    }
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido obtener la ubicación',
+                });
+            });
+    });
+    $(document).on('click', '.btnEditarContacto', function() {
+            const id = this.dataset.id;
+            const fila = this.closest('tr');
+            filaEditar=fila;
+            $.get(
+                '/clientes/contacto/obtener',
+                {id:id},
+                function (respuesta) {
+                    $('#editarContacto').modal('show');
+                    document.getElementById('nombreContactoE').value=respuesta.data.nombre;
+                    document.getElementById('emailContactoE').value=respuesta.data.email;
+                    document.getElementById('telefonoContactoE').value=respuesta.data.telefono;
+                    document.getElementById('tipoContactoE').value=respuesta.data.tipocontacto;
+                    document.getElementById('ubicacionContactoE').value=respuesta.data.ubicacion;
+                    document.getElementById('idContacto').value=respuesta.data.id;
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido obtener el contacto',
+                });
+            });
+    });
+    $(document).on('click', '.btnEliminarContacto', function() {
+            const id = this.dataset.id;
+            const fila = this.closest('tr');
+            $.get(
+                '/clientes/contacto/eliminar',
+                {id:id},
+                function (respuesta) {
+                    //fila.remove();
+                    const div = document.getElementById(`lista${id}`);
+                    if (div && div.parentElement) {
+                        div.parentElement.remove();
+                    }
+                    $(document).Toasts('create', {
+                        class: 'bg-success',
+                        title: 'Correcto',
+                        subtitle: 'exito',
+                        body: `Se ha eliminado el contacto ${respuesta.data.nombre}`,
+                    });
+                    /*$('#editarAuto').modal('show');
+                    document.getElementById('placaEditar').value=respuesta.data.placa;
+                    document.getElementById('descripcionEditar').value=respuesta.data.descripcion;
+                    document.getElementById('kilometrajeEditar').value=respuesta.data.kilometraje;
+                    document.getElementById('idAuto').value=respuesta.data.id;*/
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido eliminar la ubicación',
+                });
+            });
+    });
+    $(document).on('click', '.btnEliminarEquipo', function() {
+            const id = this.dataset.id;
+            const fila = this.closest('tr');
+            $.get(
+                '/clientes/equipo/eliminar',
+                {id:id},
+                function (respuesta) {
+                    if(respuesta.resp==1){
+                        const div = document.getElementById(`equipo${id}`);
+                        div.remove();
+                        $(document).Toasts('create', {
+                            class: 'bg-success',
+                            title: 'Correcto',
+                            subtitle: 'exito',
+                            body: `Se ha devuelto a almacén la serie ${respuesta.data.numeroserie}`,
+                        });
+                    }else{
+                        $(document).Toasts('create', {
+                            class: 'bg-danger',
+                            title: 'Error',
+                            body: respuesta.mensaje,
+                        });
+                    }
+                    //fila.remove();
+                    
+                    /*$('#editarAuto').modal('show');
+                    document.getElementById('placaEditar').value=respuesta.data.placa;
+                    document.getElementById('descripcionEditar').value=respuesta.data.descripcion;
+                    document.getElementById('kilometrajeEditar').value=respuesta.data.kilometraje;
+                    document.getElementById('idAuto').value=respuesta.data.id;*/
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido eliminar la ubicación',
+                });
+            });
+    });
+    $(document).on('click', '.btnEditarEquipo', function() {
+            const id = this.dataset.id;
+            $.get(
+                '/clientes/equipo/obtener',
+                {id:id},
+                function (respuesta) {
+                    $('#editarEquipo').modal('show');
+                    document.getElementById('sitioE').value=respuesta.data.sitio;
+                    document.getElementById('notasE').value=respuesta.data.notas;
+                    document.getElementById('fechainstalacionE').value=respuesta.data.fechainstalacion;
+                    document.getElementById('tamanoE').value=respuesta.data.tamano;
+                    document.getElementById('tipocolorE').value=respuesta.data.tipocolor;
+                    document.getElementById('tipoequipoE').value=respuesta.data.tipoequipo;
+                    document.getElementById('equipoubicacionE').value=respuesta.data.ubicacion;
+                    document.getElementById('plantillasE').value=respuesta.data.plantillas;
+                    document.getElementById('equipoId').value=respuesta.data.id;
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido obtener los datos del equipo',
+                });
+            });
+    });
+
+//Activar modales
+    function maEquipo(){
+       $('#crearEquipo').modal('show');
+    }
+    function maContacto(){
+       $('#crearContacto').modal('show');
+    }
+    function maUbicacion(){
+       $('#crearUbicacion').modal('show');
+    }
+    function editar(){
+       $('#editarCliente').modal('show');
+    }
+// INIT
+    window.addEventListener('load', initMap);
+    async function initMap() {
+        geocoder = new google.maps.Geocoder();
+        let lat = 19.026257126757454;
+        let lng = -98.19270045091669;
+        const coordsInput = document.getElementById('coordenadasCliente');
+        const coords = coordsInput ? coordsInput.value : "<%= cliente.coordenadas %>";
+        // SI EXISTEN COORDENADAS
+        if (coords && coords.includes(',')) {
+            const parts = coords.split(',');
+            lat = parseFloat(parts[0]);
+            lng = parseFloat(parts[1]);
+        }
+        const center = { lat, lng };
+        // MAPA
+        map = new google.maps.Map(document.getElementById("mainMap"), {
+            zoom: 14,
+            center: center,
+            mapId:'58e3a475509362304b85a24c',
+            mapTypeControl: false,
+            streetViewControl: false
+        });
+        // MARCADOR MODERNO (2026)
+        marker = new google.maps.marker.AdvancedMarkerElement({
+            map: map,
+            position: center,
+            gmpDraggable: true
+        });
+        // DRAG EVENT
+        marker.addListener("dragend", (event) => {
+            const pos = event.latLng;
+            updateCoords(pos.lat(), pos.lng());
+        });
+        // SI NO HAY COORDENADAS → GEOCODING
+        if (!coords || coords === "") {
+            geocodeAddress("<%= cliente.direccion %>");
+        }   
+        // TRAZAR RUTA
+        //trazarRuta();
+    }
+
+    function setUbicacionMapa(id, coordenadas, direccion,nombre) {
+        document.getElementById("nombreUbicacion").innerText=nombre;
+        currentType = 'ubicacion';
+        document.getElementById('tipoCoordenada').value="ubicacion"
+        currentId = id;
+        if (coordenadas && coordenadas.includes(',')) {
+            const parts = coordenadas.split(',');
+            const lat = parseFloat(parts[0]);
+            const lng = parseFloat(parts[1]);
+            const pos = { lat, lng };
+            marker.position = pos;
+            map.setCenter(pos);
+        } else {
+            geocodeAddress(direccion);
+        }
+    }
+    function normalizarDireccion(address) {
+        if (!address) return "";
+        return address
+            .replace(/cp\s*\d+/i, '')
+            .replace(/-/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+    function geocodeAddress(address) {
+        if (!address) return;
+        const cleanAddress = normalizarDireccion(address);
+        geocoder.geocode({ address: cleanAddress }, function(results, status) {
+            console.log("STATUS:", status);
+            if (status === "OK") {
+                const location = results[0].geometry.location;
+                map.setCenter(location);
+                marker.position = location;
+                updateCoords(location.lat(), location.lng());
+            } else {
+                console.warn("Fallback geocoder");
+                geocoder.geocode({ address: "cdmx, México" }, function(res2, status2) {
+                    if (status2 === "OK") {
+                        const loc = res2[0].geometry.location;
+                        map.setCenter(loc);
+                        marker.position = loc;
+                    }
+                });
+            }
+        });
+    }
+    function updateCoords(lat, lng) {
+        console.log("Nuevas coordenadas:", lat, lng);
+        const coords = `${lat},${lng}`;
+        const input = document.getElementById('coordenadasCliente');
+        if (input) input.value = coords;
+        
+        saveNewCoords(lat, lng);
+    }
+    async function saveNewCoords(lat, lng) {
+        const status = document.getElementById('map-status');
+        if (status) {
+            status.className = "badge badge-warning text-white";
+            status.innerText = "Guardando...";
+        }
+        try {
+            const url = currentType === 'cliente'
+            ? '/clientes/actualizar-coordenadas'
+            : '/clientes/ubicacion/actualizar-coordenadas';
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: currentId,
+                    coordenadas: `${lat},${lng}`
+                })
+            });
+            if (response.ok && status) {
+                status.className = "badge badge-success text-white";
+                status.innerText = "Actualizado";
+                setTimeout(() => status.innerText = "Sincronizado", 2000);
+            }
+        } catch (e) {
+            console.error(e);
+            if (status) {
+                status.className = "badge badge-danger text-white";
+                status.innerText = "Error";
+            }
+        }
+    }
+    let lastRouteRequest = 0;
+    async function trazarRuta() {
+        const ahora = Date.now();
+        // Bloquea la petición si se hizo una hace menos de 10 segundos
+        if (ahora - lastRouteRequest < 10000) { 
+            console.warn("Espera un poco para actualizar la ruta");
+            return; 
+        }
+        lastRouteRequest = ahora;
+        if (!puntos || puntos.length < 2) return;
+        const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
+        const body = {
+            origin: {
+            location: {
+                latLng: {
+                latitude: puntos[0].lat,
+                longitude: puntos[0].lng
+                }
+            }
+            },
+            destination: {
+            location: {
+                latLng: {
+                latitude: puntos[puntos.length - 1].lat,
+                longitude: puntos[puntos.length - 1].lng
+                }
+            }
+            },
+            intermediates: puntos.slice(1, -1).map(p => ({
+            location: {
+                latLng: {
+                latitude: p.lat,
+                longitude: p.lng
+                }
+            }
+            })),
+            travelMode: "DRIVE",
+            //routingPreference: "TRAFFIC_AWARE"
+        };
+        try {
+            const res = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": "AIzaSyCax07nLMeUuGzvQk5HbMSc8chV61aoe7w",
+                "X-Goog-FieldMask": "routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration" 
+            },
+            body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (!data.routes) {
+            console.error("No se pudo calcular ruta");
+            return;
+            }
+            const encodedPolyline = data.routes[0].polyline.encodedPolyline;
+            const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
+            new google.maps.Polyline({
+            path: decodedPath,
+            geodesic: true,
+            strokeColor: "#3498db",
+            strokeOpacity: 1.0,
+            strokeWeight: 5
+            }).setMap(map);
+        } catch (e) {
+            console.error("Error en ruta:", e);
+        }
+    }
+
+
+
+    $(document).ready(function() {
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
+            if (map) {
+            setTimeout(() => google.maps.event.trigger(map, "resize"), 300);
+            }
+        });
+        $("#searchUbicaciones").on("keyup", function() {
+            const value = $(this).val().toLowerCase().trim();
+            let visibleCount = 0;
+            $("#tablaUbicaciones tbody tr").each(function() {
+                const textoFila = $(this).text().toLowerCase();
+                const isMatch = textoFila.indexOf(value) > -1;
+                /*$(this).toggle(isMatch);
+                if (isMatch) {
+                    visibleCount++;
+                }*/
+               if (isMatch) {
+                    $(this).show();
+                    visibleCount++;
+                } else {
+                    $(this).hide();
+                }
+            });
+            /*$(".contenedor-busqueda").each(function() {
+                const textoTarjeta = $(this).text().toLowerCase();
+                const isMatch = textoTarjeta.indexOf(value) > -1;
+                if (isMatch) {
+                    $(this).show();
+                    visibleCount++;
+                } else {
+                    $(this).hide();
+                }
+            });*/
+            $("#ubicaciones-count").text(visibleCount);
+            if (visibleCount === 0 && value !== "") {
+                $("#noResultsUbicaciones").removeClass("d-none");
+            } else {
+                $("#noResultsUbicaciones").addClass("d-none");
+            }
+        });
+        $("#searchContactos").on("keyup", function() {
+            const value = $(this).val().toLowerCase().trim();
+            let visibleCount = 0;
+            $(".contenedor-busqueda").each(function() {
+                const textoTarjeta = $(this).text().toLowerCase(); 
+                const isMatch = textoTarjeta.indexOf(value) > -1;
+                if (isMatch) {
+                    $(this).show();
+                    visibleCount++;
+                } else {
+                    $(this).hide();
+                }
+            });
+            $("#contactos-count").text(visibleCount);
+            if (visibleCount === 0 && value !== "") {
+                $("#noResultsContacto").removeClass("d-none");
+            } else {
+                $("#noResultsContacto").addClass("d-none");
+            }
+        });
+        $("#searchEquipos").on("keyup", function() {
+            const value = $(this).val().toLowerCase();
+            let visibleCount = 0;
+
+            $(".equipo-card").each(function() {
+                const isMatch = $(this).data("search").indexOf(value) > -1;
+                $(this).toggle(isMatch);
+                if (isMatch) visibleCount++;
+            });
+
+            $("#equipos-count").text(visibleCount);
+            $("#noResults").toggleClass("d-none", visibleCount > 0);
+        });
+    });
+</script>

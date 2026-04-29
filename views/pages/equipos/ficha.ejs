@@ -1,0 +1,780 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+
+<style>
+  .border-left-info { border-left: 4px solid #17a2b8 !important; }
+  .custom-pills .nav-link { border-radius: 20px; margin-right: 5px; font-size: 0.9rem; }
+  .custom-pills .nav-link.active { box-shadow: 0 4px 10px rgba(0,123,255,.3); }
+  .box-profile .bi-printer-fill { filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1)); }
+</style>
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h3 class="font-weight-bold text-dark mb-0"><i class="bi bi-printer-fill mr-2"></i> <%=equipos.numeroserie%> </h3>
+                   
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/equipos">Equipo</a></li>
+                        <li class="breadcrumb-item active">Ficha de vida</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+       <!-- Ficha de Vida: Multifuncional -->
+<div class="row">
+  <!-- Columna Izquierda: Información de Identidad (Sticky) -->
+  <div class="col-md-4">
+    <!-- Card del Artículo (El "Corazón" del equipo) -->
+    <div class="card card-outline card-primary shadow-sm">
+      <div class="card-body box-profile">
+        <div class="text-center mb-3">
+          <i class="bi bi-printer-fill text-primary" style="font-size: 4rem;"></i>
+        </div>
+        <h3 class="profile-username text-center font-weight-bold mb-0">Sharp <%= equipos.modelo %></h3>
+        <p class="text-muted text-center"><%= equipos.articulo.descripcion %></p>
+
+        <ul class="list-group list-group-unbordered mb-3">
+          <li class="list-group-item">
+            <b>Serie</b> <a class="float-right text-dark font-weight-bold"><%= equipos.numeroserie %></a>
+          </li>
+          <li class="list-group-item">
+            <b>Plantilla</b> <a class="float-right text-dark float-right"><%= equipos.plantillas.nombre %></a>
+          </li>
+          <li class="list-group-item">
+            <b>Tipo</b> 
+            <%
+                let poliza=false
+             if(equipos.cliente.oficina!=oficinaElegida.id){ 
+                poliza=true %>
+                <span class="badge badge-danger float-right">Póliza entre exi</span> 
+            <% }else{
+                if(equipos.tipoequipo=="ARRENDAMIENTO"){%>
+                    <span class="badge badge-primary float-right">ARRENDAMIENTO</span>
+                <%}if(equipos.tipoequipo=="POLIZA"){%>
+                    <span class="badge badge-success float-right">Póliza de servicio</span>
+                <%} if(equipos.tipoequipo=="TYM"){%>
+                    <span class="badge badge-secondary float-right">TYM</span>
+                <%}%>  
+            <% } %>
+          </li>
+          <li class="list-group-item">
+            <b>Instalación</b> <a class="float-right"><%= equipos.fechainstalacion %></a>
+          </li>
+          <% if(poliza){ %>
+            <li class="list-group-item">
+                <b>Oficina</b> <a class="float-right text-dark font-weight-bold"><%= equipos.oficina.nombre %></a>
+            </li>
+          <%} if(equipos.baja){ %>
+          <li class="list-group-item">
+            <b>Fecha de baja</b> <span class="badge badge-danger float-right"><%= equipos.fechabaja %></span> 
+          </li>
+          <% } %>
+        </ul>
+        
+        <div class="alert alert-light border-left-info py-2">
+          <small class="text-muted d-block text-uppercase font-weight-bold">Notas del Equipo:</small>
+          <span class="small italic"><%= equipos.notas %></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card de Oficina & Ubicación (Tratamiento Diferente) 
+    <div class="card shadow-sm">
+      <div class="card-header bg-light">
+        <h3 class="card-title text-uppercase small font-weight-bold"><i class="bi bi-geo-alt-fill mr-2"></i>Asignación Logística</h3>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr>
+              <td class="pl-3 py-3">
+                <span class="d-block font-weight-bold text-primary">Oficina Staff</span>
+                <small class="text-muted">Horario: <%= equipos.cliente.horario %> </small>
+              </td>
+            </tr>
+            <tr>
+              <td class="pl-3 py-3">
+                <span class="d-block font-weight-bold text-success"><%= equipos.ubicacion.nombre %></span>
+                <small class="text-muted"><%= equipos.ubicacion.direccion %></small>
+                <div class="mt-1"><span class="badge badge-warning text-xs">SLA: <%= equipos.ubicacion.sla %></span></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>-->
+  </div>
+
+  <!-- Columna Derecha: Tabs de Gestión -->
+  <div class="col-md-8">
+    <% if(equipos.activo==0){ %> 
+        <div class="row mb-2">
+            <div class="col-12 float ">
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-x-circle-fill mr-2"></i> <!-- Icono opcional -->
+                    Este equipo esta devuelto a almacén, puedes revisar el historial, pero no puedes editar ninguna información
+                </div>
+            </div>
+        </div>
+    <%}else{ %>
+        <div class="row justify-content-end mb-4">
+                <div class="col-auto"> <div class="btn-group shadow-sm">
+                        <button class="btn btn-white bg-success border" data-toggle="modal" data-target="#editarEquipo">
+                            <i class="fas fa-edit mr-1"></i>Editar
+                        </button>
+                        <button class="btn btn-white bg-warning border btnEliminarEquipo" data-id="<%=equipos.id%>" title="Eliminar equipo">
+                            <i class="fas fa-undo mr-1"></i> Devolver a almacén
+                        </button>
+                        <% if(equipos.baja){ %>
+                                <a href="/equipos/activar/<%=equipos.id%>" class="btn btn-primary"><i class="fas fa-check-circle mr-1"></i> Dar de alta</a>
+                        <% }else{ %>
+                            <button class="btn btn-danger" data-toggle="modal" data-target="#bajaEquipo">
+                                <i class="bi bi-trash mr-1"></i> Dar de baja
+                            </button>
+                        <%} %>
+                    </div>
+                </div>
+            </div>
+        
+    <% } %>
+    <div class="card shadow-sm border-0">
+      <div class="card-header p-2 bg-white">
+        <ul class="nav nav-pills custom-pills">
+          <li class="nav-item"><a class="nav-link active" href="#especificaciones" data-toggle="tab"><i class="bi bi-cpu mr-2"></i>Especificaciones</a></li>
+          <li class="nav-item"><a class="nav-link" href="#ubicacion" data-toggle="tab"><i class="bi bi-geo-alt-fill mr-2"></i>Ubicación</a></li>
+          <li class="nav-item"><a class="nav-link" href="#cliente" data-toggle="tab"><i class="bi bi-person-badge mr-2"></i>Cliente</a></li>
+          <li class="nav-item"><a class="nav-link" href="#avisos" data-toggle="tab"><i class="bi bi-clock-history mr-2"></i>Avisos</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contadores" data-toggle="tab"><i class="bi bi-speedometer2 mr-2"></i>Contadores</a></li>
+        </ul>
+      </div>
+      
+      <div class="card-body">
+        <div class="tab-content">
+
+            
+          
+          <!-- TAB: ESPECIFICACIONES TÉCNICAS -->
+          <div class="tab-pane active" id="especificaciones">
+            <div class="row">
+              <div class="col-sm-6">
+                <h6 class="text-primary font-weight-bold">Hardware</h6>
+                <hr class="mt-0">
+                <p><strong>Tamaño:</strong> <%= equipos.tamano %></p>
+                <p><strong>Color/Mono:</strong> <%= equipos.tipocolor %></p>
+                <p><strong>Garantía:</strong> <%= equipos.articulo.garantia %> meses</p>
+              </div>
+            </div>
+          </div>
+           <!-- TAB: ESPECIFICACIONES TÉCNICAS -->
+            <div class="tab-pane " id="ubicacion">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="pl-3 py-3">
+                                <span class="d-block font-weight-bold text-success"><%= equipos.ubicacion.nombre %></span>
+                                <small class="text-muted"><%= equipos.ubicacion.direccion %></small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="pl-3 py-3">
+                                <span class="d-block font-weight-bold text-primary">Sitio</span>
+                                <small class="text-muted"> <%= equipos.sitio %> </small>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+          <!-- TAB: CLIENTE (Vistoso) -->
+          <div class="tab-pane" id="cliente">
+            <div class="bg-light p-3 rounded border">
+              <h5 class="font-weight-bold"><%= equipos.cliente.razonsocial %></h5>
+              <p class="mb-1"><i class="bi bi-hash mr-2"></i>RFC: <%= equipos.cliente.rfc %></p>
+              <p class="mb-1"><i class="bi bi-telephone mr-2"></i>Tel: <%= equipos.cliente.telefono %></p>
+              <p class="mb-1"><i class="bi bi-envelope mr-2"></i><%= equipos.cliente.email %></p>
+              <p class="mb-0"><i class="bi bi-clock mr-2"></i><%= equipos.cliente.horario %></p>
+            </div>
+          </div>
+
+          <!-- TAB: AVISOS (Server-side Datatable) -->
+          <div class="tab-pane" id="avisos">
+            <div class="">
+              <table id="tblAvisos" class="display table table-bordered table-striped w-100" >
+                <thead >
+                  <tr>
+                    <th>Folio</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Atendido por</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    <%
+                        if(equipos.equiposAviso){
+                            equipos.equiposAviso.forEach(e=>{
+                                %>
+                                <tr>
+                                <td><a href="/avisos/<%=e.aviso.id%>"><%=e.aviso.folio%></a></td>
+                                <td><%= new Date(Number(e.aviso.createdAt)).toLocaleString('es-ES', {  day: '2-digit', month: '2-digit',  year: 'numeric', hour: '2-digit',  minute: '2-digit' }) %></td>
+                                <td>
+                                    <%=e.aviso.cliente.razonsocial%>(<%=e.aviso.ubicacion.nombre%>)
+                                </td>
+                                <td><%=e.aviso.tipoAviso.nombre%></td>
+                                <td><%=e.aviso.estado%></td>
+                                <td><%=e.aviso.atendidoPor.nombre%></td>
+                                </tr>
+                                <%
+                            })
+                        }else{ %>
+                            <tr>
+                                <td colspan="6">Sin registros</td>
+                            </tr>
+                        <% }
+                    %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB: CONTADORES -->
+          <div class="tab-pane" id="contadores">
+            <div class="row mb-4">
+                <div class="col-md-6 offset-md-3">
+                    <div class="input-group shadow-sm" style="border-radius: 25px; overflow: hidden; border: 1px solid #dee2e6;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text bg-white border-0 pl-4">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                        </div>
+                        <input type="text" id="busquedaContador" class="form-control border-0 py-4" placeholder="Buscar por tipo de contador o aviso..." style="box-shadow: none;">
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="contenedorContadores">
+                <% if(equipos.contadores && equipos.contadores.length > 0){ 
+                    equipos.contadores.forEach(c => { %>
+                    <div class="col-lg-4 col-md-6 mb-4 card-item" 
+                        data-tipo="<%= c.tipoContador.nombre.toLowerCase() %>" 
+                        data-aviso="<%= (c.tipoContador.tipoAviso || '').toLowerCase() %>">
+                        
+                        <div class="card border-0 shadow-sm" style="border-radius: 12px; transition: all 0.3s ease;">
+                            <div class="card-body p-4">
+                                
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <span class="text-uppercase tracking-wider small font-weight-bold text-muted" style="letter-spacing: 1px;">
+                                        <%= c.tipoContador.tipoAviso || 'General' %>
+                                    </span>
+                                    <div class="text-right">
+                                        <small class="d-block text-muted">ID: #<%= c.id %></small>
+                                    </div>
+                                </div>
+
+                                <h5 class="font-weight-bold mb-1" style="color: #2d3436;">
+                                    <%= c.tipoContador.nombre %>
+                                    <% if(c.tipoContador.tipoAviso=="Avería"||c.tipoContador.tipoAviso=="Mantenimiento"){
+                                        %><%=c.tipoContador.tipo%><%
+                                    }%>
+                                </h5>
+                                <p class="small text-muted mb-4">Última actualización: <%= new Date(Number(c.createdAt)).toLocaleDateString() %></p>
+
+                                <div class="d-flex align-items-baseline">
+                                    <span class="display-4 font-weight-bold text-primary mr-2" style="font-size: 2.5rem;">
+                                        <%= c.valor %>
+                                    </span>
+                                    <span class="text-muted h6 font-weight-normal">unidades</span>
+                                </div>
+
+                                <hr class="my-4" style="border-top: 1px solid #f1f3f5;">
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-primary px-4 shadow-sm" 
+                                            style="border-radius: 8px; font-size: 0.85rem;"
+                                            onclick="verHistorial(<%= c.tipoContador.id %>,<%= equipos.id %>)">
+                                        <i class="fas fa-history mr-2"></i> Historial
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                <% }) 
+                } else { %>
+                    <div class="col-12 text-center py-5">
+                        <p class="text-muted">No se encontraron registros.</p>
+                    </div>
+                <% } %>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    </section>
+</div>
+
+
+<!-- MODAL EDITAR EQUIPO -->
+<div class="modal fade" id="editarEquipo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Editar Equipo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formEditarEquipo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="ubicacionEquipo" class="col-sm-2 col-form-label">Ubicación*</label>
+                        <div class="col-sm-10">
+                           <select name="ubicacionEquipo" id="ubicacionEquipo" class="form-control">
+                                <% ubicaciones.forEach(u=>{
+                                    let mostrarFila = false;
+                                    if (equipos.oficina.id!=oficinaElegida.id) {
+                                        if (u.oficinaAtencion && u.oficinaAtencion.id == oficinaElegida.id) {
+                                            mostrarFila = true;
+                                        }
+                                    } else {
+                                        mostrarFila = true;
+                                    }
+                                    if(u.activo==0){
+                                        mostrarFila=false;
+                                    }
+                                    if(mostrarFila){ 
+                                    %>
+                                    <option value="<%=u.id%>" <%=u.id==equipos.ubicacion.id?'selected':''%>><%=u.nombre%></option>
+                                <% }}) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="marca" class="col-sm-2 col-form-label">Marca*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="marca" name="marca" required value="<%=equipos.marca%>">
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="modelo" class="col-sm-2 col-form-label">Modelo*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="modelo" name="modelo" required value="<%=equipos.modelo%>">
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="descripcion" class="col-sm-2 col-form-label">Descripción*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="descripcion" name="descripcion" required> <%=equipos.descripcion%></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="sitio" class="col-sm-2 col-form-label">Sitio de instalación*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="sitio" name="sitio" required value="<%=equipos.sitio%>">
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="notas" class="col-sm-2 col-form-label">Notas*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="notas" name="notas" required> <%=equipos.notas%></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="fechainstalacion" class="col-sm-2 col-form-label">Fecha de instalación*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fechainstalacion" name="fechainstalacion" required value="<%=equipos.fechainstalacion%>">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tamano" class="col-sm-2 col-form-label">Tamaño*</label>
+                        <div class="col-sm-10">
+                            <select name="tamano" id="tamano" class="form-control">
+                                <option value="A3" <%=equipos.tamano=='A3'?'selected':''%>>A3</option>
+                                <option value="A4" <%=equipos.tamano=='A4'?'selected':''%>>A4</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipocolor" class="col-sm-2 col-form-label">Color o Monocromo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipocolor" id="tipocolor" class="form-control">
+                                <option value="Color" <%=equipos.tipocolor=='Color'?'selected':''%>>Color</option>
+                                <option value="Monocromo" <%=equipos.tipocolor=='Monocromo'?'selected':''%>>Monocromo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoequipo" class="col-sm-2 col-form-label">Tipo de Equipo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipoequipo" id="tipoequipo" class="form-control">
+                                <option value="POLIZA" <%=equipos.tipoequipo=='POLIZA'?'selected':''%>>Póliza</option>
+                                <option value="TYM" <%=equipos.tipoequipo=='TYM'?'selected':''%>>TYM</option>
+                                <option value="ARRENDAMIENTO" <%=equipos.tipoequipo=='ARRENDAMIENTO'?'selected':''%>>Arrendamiento</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="plantilla" class="col-sm-2 col-form-label">Plantilla*</label>
+                        <div class="col-sm-10">
+                            <select name="plantillas" id="plantillas" class="form-control">
+                                <% plantillas.forEach(u=>{ %>
+                                    <option value="<%=u.id%>" <%=u.id==equipos.plantillas.id?'selected':''%>><%=u.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="d-none" name="clienteEquipo" id="clienteEquipo" onchange="buscarUbicaciones()" value="<%=equipos.cliente.id%>">
+                <input type="text" class="d-none" name="oficinaEquipo" id="oficinaEquipo" value="<%=equipos.oficina.id%>">
+                <input type="text" class="d-none" name="equipoId" id="equipoId" value="<%=equipos.id%>">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL DAR DE BAJA -->
+<div class="modal fade" id="bajaEquipo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Editar Equipo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formBajaEquipo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+
+                    <div class="form-group row">    
+                        <label for="fechabaja" class="col-sm-2 col-form-label">Fecha de instalación*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fechabaja" name="fechabaja" required >
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="motivobaja" class="col-sm-2 col-form-label">Motivo de la baja*</label>
+                        <div class="col-sm-10">
+                            <textarea type="date" class="form-control" id="motivobaja" name="motivobaja" required rows="3" ></textarea>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Dar de baja</button>
+                <input type="text" class="d-none" name="equipoId" id="equipoId" value="<%=equipos.id%>">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="historial" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Historial</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table id="tablaHistorial" class="display table table-bordered table-striped w-100" >
+                    <thead >
+                    <tr>
+                        <th>Id</th>
+                        <th>Valor</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Tipo</th>
+                        <th>Notas</th>
+                        <th>Atendido por</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tblContadores">
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const buscador = document.getElementById('busquedaContador');
+        const tarjetas = document.querySelectorAll('.card-item');
+
+        buscador.addEventListener('input', function(e) {
+            const termino = e.target.value.toLowerCase();
+
+            tarjetas.forEach(card => {
+                const nombreTipo = card.getAttribute('data-tipo');
+                const nombreAviso = card.getAttribute('data-aviso');
+
+                // Si el término coincide con el nombre o el tipo de aviso, se muestra
+                if (nombreTipo.includes(termino) || nombreAviso.includes(termino)) {
+                    card.style.display = 'block';
+                    // Pequeña animación de entrada
+                    card.style.opacity = '0';
+                    setTimeout(() => { card.style.opacity = '1'; card.style.transition = 'opacity 0.3s'; }, 10);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+    function verHistorial(tipocontador,equipo){
+        $.ajax({
+                    type: 'GET',
+                    url: '/equipos/contadores/historial',
+                    data: {contador:tipocontador,equipo:equipo},
+                    
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        let contadores=``;
+                        if ($.fn.DataTable.isDataTable('#tablaHistorial')) {
+                            $('#tablaHistorial').DataTable().destroy();
+                        }
+                        const tbody = document.getElementById('tblContadores');
+                        ob.contadores.forEach(c=>{
+                            contadores+=`
+                                <tr>
+                                    <td><a href="/avisos/${c.aviso.id}">${c.id}</a></td>
+                                    <td>${c.valor}</td>
+                                    <td>${new Date(Number(c.aviso.createdAt)).toLocaleDateString()}</td>
+                                    <td>${c.cliente.razonsocial} (${c.ubicacion.nombre})</td>
+                                    <td>${c.tipoContador.nombre} ${c.tipoAviso==1||c.tipoAviso==2?c.tipoContador.tipocontador:''}</td>
+                                    <td>${c.intervencion.observaciones}</td>
+                                    <td>${c.atendidoPor.nombre}</td>
+                                </tr>
+                            `
+                        })
+                        tbody.innerHTML = contadores
+                        $('#tablaHistorial').DataTable({
+                            destroy: true,        // Permite re-inicializar sobre la misma tabla
+                            order: [[0, 'desc']], // Ordena por la columna 0 (Id) de forma descendente
+                            language: {           // Opcional: traducción al español
+                                url: 'https://cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+                            },
+                            responsive: true
+                        });
+                        $('#historial').modal('show');
+                    }
+                });
+    }
+    $(document).ready(function () {
+        var table = $('#tblAvisos').DataTable({
+            stateSave: true,
+            
+            scrollX:true,
+            scrollCollapse:true,
+            order: [[0, 'desc']],
+        });
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            // e.target es la pestaña activada
+            var targetId = $(e.target).attr("href"); 
+
+            // Si la pestaña activada es la que contiene la tabla de avisos
+            if (targetId === '#avisos') {
+                // Forzar el ajuste de columnas
+                table.columns.adjust().draw();
+            }
+        });
+        document.getElementById('btn-agregar-serie').addEventListener('click', function() {
+            let input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'series[]';
+            input.className = 'form-control';
+            document.getElementById('lista-series').appendChild(input);
+        });
+        var table = $('#articulos').DataTable({
+            "processing":true,
+            "serverSide":true,
+            "ajax":{
+                "url":"/almacen/articulos/tabla",
+                "type":"GET"
+            },
+            rowId: 'id',
+            stateSave: true,
+            columns: [
+                { data:  null,
+                    render:function(data,type,row){
+                        return `<a href="/almacen/articulos/${row.id}">
+                                ${row.codigo}
+                            </a>`;
+                    }},
+                { data: 'descripcion'},
+                { data: 'marca'},
+                { data: 'modelo' },
+                { data: 'tipo' },
+                { data: 'garantia' },
+                { data: 'preciopublico'},
+            ],
+            columnDefs: [
+                {
+                    searchable: false,
+                    orderable: false,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+    });
+    $("#formBajaEquipo").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/equipos/baja',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha dado de baja de forma correcta el equipo ${ob.equipo.numeroserie}`,
+                            });
+                            setTimeout(()=>{
+                                location.reload()
+                            },1000)
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: ob.mensaje,
+                            });
+                        }
+                        $('#bajaEquipo').modal('hide');
+                    }
+                });
+    });
+    $("#formEditarEquipo").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/equipos/actualizar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha modificado de forma correcta el equipo ${ob.equipo.numeroserie}`,
+                            });
+                            setTimeout(()=>{
+                                location.reload()
+                            },1000)
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: ob.mensaje,
+                            });
+                        }
+                        $('#editarEquipo').modal('hide');
+                    }
+                });
+    });
+    $(document).on('click', '.btnEliminarEquipo', function() {
+            const id = this.dataset.id;
+            const fila = this.closest('tr');
+            $.get(
+                '/clientes/equipo/eliminar',
+                {id:id},
+                function (respuesta) {
+                    //fila.remove();
+                    if(respuesta.resp==1){
+                        $(document).Toasts('create', {
+                            class: 'bg-success',
+                            title: 'Correcto',
+                            subtitle: 'exito',
+                            body: `Se ha devuelto a almacén la serie ${respuesta.equipo.numeroserie}`,
+                        });
+                        setTimeout(() => {
+                                location.reload();
+                        },1000);
+                    }else{
+                        $(document).Toasts('create', {
+                            class: 'bg-danger',
+                            title: 'Error',
+                            body: respuesta.mensaje,
+                        });
+                    }
+                }
+            ).fail(function(res){
+                $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido devolver a almacén el equipo',
+                });
+            });
+    });
+</script>

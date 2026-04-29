@@ -1,0 +1,278 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+<link rel="stylesheet" href="/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+<style type="text/css">
+    .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card-header { background-color: #fff; border-bottom: 1px solid #eee; font-weight: bold; color: #333; }
+        .search-results { position: absolute; z-index: 1000; width: 100%; display: none; }
+        .list-group-item-action { cursor: pointer; }
+        .table thead { background-color: #007bff; color: white; }
+        .btn-primary { background-color: #007bff; border: none; }
+        .btn-primary:hover { background-color: #0056b3; }
+</style>
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Agregar Compra</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Almacén</a></li>
+                        <li class="breadcrumb-item active">Compras</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4 text-secondary"><i class="fas fa-shopping-cart"></i> Nueva Compra</h2>
+            
+            <div class="card mb-4">
+                <div class="card-header">Información General</div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>Fecha de Compra</label>
+                            <input type="date" id="fechaCompra" class="form-control" value="">
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label>Concepto / Referencia</label>
+                            <input type="text" id="conceptoCompra" class="form-control" placeholder="Ej: Factura Número 12345">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header text-primary">Agregar Artículos</div>
+                <div class="card-body bg-light">
+                    <div class="form-row align-items-end">
+                        <div class="form-group col-md-4 position-relative">
+                            <label>Buscar Artículo (mín. 3 letras)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                </div>
+                                <input type="text" id="busquedaArticulo" class="form-control" placeholder="Escribe nombre...">
+                            </div>
+                            <div id="resultadosBusqueda" class="list-group search-results shadow"></div>
+                            <input type="hidden" id="selectedArticuloId">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Precio Costo</label>
+                            <input type="number" id="tempCosto" class="form-control" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label>Cantidad</label>
+                            <input type="number" id="tempCantidad" class="form-control" placeholder="0">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <button type="button" onclick="agregarATabla()" class="btn btn-success btn-block">
+                                <i class="fas fa-plus"></i> Añadir a la lista
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0" id="tablaDetalles">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Artículo</th>
+                                <th>Cantidad</th>
+                                <th>Costo Unit.</th>
+                                <th>Subtotal</th>
+                                <th width="50"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Total: <span id="totalCompra">$0.00</span></h5>
+                    <button type="button" onclick="enviarCompra()" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Ingresar Compra
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    </section>
+</div>
+
+
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="/plugins/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+    let carrito = [];
+
+    // 1. Lógica de búsqueda en Sails.js
+    const inputBusqueda = document.getElementById('busquedaArticulo');
+    const contenedorResultados = document.getElementById('resultadosBusqueda');
+
+    inputBusqueda.addEventListener('keyup', async (e) => {
+        const query = e.target.value;
+        if (query.length >= 3) {
+            try {
+                // Endpoint sugerido para Sails: /articulos?where={"nombre":{"contains":"..."}}&limit=5
+                //const resp = await fetch(`/articulos?where={"nombre":{"contains":"${query}"}}&limit=5`);
+                $.ajax({
+                    type: 'GET',
+                    url: '/almacen/articulos/buscar-compras',
+                    data: {nombre:query},
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        contenedorResultados.innerHTML = '';
+                        contenedorResultados.style.display = 'block';
+                        ob.articulos.forEach(art => {
+                            const item = document.createElement('a');
+                            item.className = 'list-group-item list-group-item-action';
+                            item.innerHTML = `<strong>${art.codigo}</strong> <small class="text-muted">ID: ${art.id}</small>`;
+                            item.onclick = () => seleccionarArticulo(art);
+                            contenedorResultados.appendChild(item);
+                        });
+                    }
+                });
+                
+            } catch (err) {
+                console.error("Error buscando artículos", err);
+            }
+        } else {
+            contenedorResultados.style.display = 'none';
+        }
+    });
+
+    function seleccionarArticulo(art) {
+        inputBusqueda.value = art.codigo;
+        document.getElementById('selectedArticuloId').value = art.id;
+        contenedorResultados.style.display = 'none';
+        document.getElementById('tempCosto').focus();
+    }
+
+    // 2. Agregar artículo a la tabla temporal
+    function agregarATabla() {
+        const id = document.getElementById('selectedArticuloId').value;
+        const nombre = inputBusqueda.value;
+        const costo = parseFloat(document.getElementById('tempCosto').value);
+        const cantidad = parseInt(document.getElementById('tempCantidad').value);
+
+        if (!id || isNaN(costo) || isNaN(cantidad)) {
+            swal.fire({
+                title: "¡Error!",
+                text: "Debes ingresar un costo y una cantidad",
+                icon: "error",
+                timer: 2000,
+                buttons: false // Oculta el botón para que sea automático
+            })
+            return;
+        }
+
+        const item = { id, nombre, costo, cantidad, subtotal: costo * cantidad };
+        carrito.push(item);
+        renderizarTabla();
+        
+        // Limpiar campos de captura
+        inputBusqueda.value = '';
+        document.getElementById('selectedArticuloId').value = '';
+        document.getElementById('tempCosto').value = '';
+        document.getElementById('tempCantidad').value = '';
+    }
+
+    function renderizarTabla() {
+        const tbody = document.querySelector('#tablaDetalles tbody');
+        tbody.innerHTML = '';
+        let total = 0;
+
+        carrito.forEach((item, index) => {
+            total += item.subtotal;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.id}</td>
+                    <td>${item.nombre}</td>
+                    <td>${item.cantidad}</td>
+                    <td>$${item.costo.toFixed(2)}</td>
+                    <td>$${item.subtotal.toFixed(2)}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="eliminarItem(${index})">&times;</button></td>
+                </tr>
+            `;
+        });
+        document.getElementById('totalCompra').innerText = `$${total.toFixed(2)}`;
+    }
+
+    function eliminarItem(index) {
+        carrito.splice(index, 1);
+        renderizarTabla();
+    }
+
+    // 3. Enviar datos al controlador
+    async function enviarCompra() {
+        if (carrito.length === 0) return alert("No hay artículos en la compra");
+
+        const data = {
+            fecha: document.getElementById('fechaCompra').value,
+            concepto: document.getElementById('conceptoCompra').value,
+            articulos: carrito.map(i => ({ id: i.id, cantidad: i.cantidad, costo: i.costo }))
+        };
+
+        try {
+            Swal.fire({ title: 'Agregando compra...', didOpen: () => { Swal.showLoading() } });
+            $.post('/almacen/compras/agregar', data)
+            .done(function(res) {
+                Swal.fire('¡Éxito!', 'La compra se ha agregado de forma correcta.', 'success');
+            })
+            .fail(function(err) {
+                Swal.fire('Error', 'No se pudo agregar la compra, verifica que los datos sean correctos o intenta nuevamente.', 'error');
+            });
+            /*$.ajax({
+                    type: 'POST',
+                    url: '/almacen/compras/agregar',
+                    data: data,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        
+                    }
+                });*/
+            /*const response = await fetch('/compras/crear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });*/
+
+            
+        } catch (error) {
+            alert("Error al enviar la compra");
+        }
+    }
+</script>

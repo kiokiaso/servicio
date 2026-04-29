@@ -1,0 +1,496 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+<link rel="stylesheet" href="/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+<style>
+    #datSeries {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datSeries .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+     #datClientes {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datClientes .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+    .transition-icon {
+        transition: transform 0.3s ease;
+    }
+    .card-header[aria-expanded="false"] .transition-icon {
+        transform: rotate(180deg);
+    }
+</style>
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <h1 class="h3 font-weight-light text-secondary col-sm-6">
+    <i class="fas fa-tools mr-2 text-primary"></i>Atender equipo de Aviso 
+    <span class="font-weight-bold text-dark">#<%= aviso.id %></span>
+</h1>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/avisos/<%=aviso.id%>">Ficha de aviso</a></li>
+                        <li class="breadcrumb-item active">Atender</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+
+<!-- Cabecera Informativa -->
+<div class="card shadow-sm border-0 mb-3 bg-light">
+    <div class="card-body py-3">
+        <div class="row align-items-center">
+            <div class="col-md-4 border-right">
+                <label class="small text-muted text-uppercase mb-0">Cliente / Ubicación</label>
+                <h6 class="mb-0 font-weight-bold"><%= aviso.cliente.razonsocial %></h6>
+                <small class="text-info"><%= aviso.ubicacion.nombre %></small>
+            </div>
+            <div class="col-md-4 border-right">
+                <label class="small text-muted text-uppercase mb-0">Equipo</label>
+                <h5 class="mb-0 font-weight-bold"><%= equipo.modelo %></h5>
+                <h6>Serie: <span class="badge badge-dark font-weight-bold"><%= equipo.numeroserie %></span></h6>
+            </div>
+            <div class="col-md-4">
+                <label class="small text-muted text-uppercase mb-0">Reporte de Falla</label>
+                <h6 class="mb-0 text-danger"><%= avisoEquipo.tipoProblema.nombre %></h6>
+                <small class="text-muted"><%= avisoEquipo.observaciones %></small>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <!-- Columna Izquierda: Datos Técnicos -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="m-0 font-weight-bold text-primary"><i class="fas fa-tools mr-2"></i>Atención Técnica</h5>
+            </div>
+            <div class="card-body">
+                <form id="formAtencion">
+                    <!-- Contadores -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <p class="h6 font-weight-bold text-uppercase text-muted border-bottom pb-2">Contadores</p>
+                        </div>
+                        <% tipoContadores.forEach(tipo => { %>
+                            <div class="col-md-6 mb-3">
+                                <!-- Etiqueta más grande -->
+                                <label class="font-weight-bold text-dark" style="font-size: 1.05rem;">
+                                    <%= tipo.nombre %> <% if(aviso.tipoAviso<=2){ %>- <span class="text-info"><%=tipo.tipocontador%></span> <% }%>
+                                </label>
+                                <input type="number" name="<%= tipo.id %>" class="form-control form-control-lg border-primary" value="0" required style="font-size: 1.2rem;">
+                            </div>
+                        <% }) %>
+                    </div>
+
+                    <!-- Estado del Equipo -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <p class="h6 font-weight-bold text-uppercase text-muted border-bottom pb-2">Condición del Equipo</p>
+                        </div>
+                        <div class="col-12">
+                            <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                                <label class="btn btn-outline-success p-3 flex-fill active">
+                                    <input type="radio" name="estado" value="Operativo" checked> 
+                                    <i class="fas fa-check-circle fa-2x d-block mb-2"></i> 
+                                    <span class="font-weight-bold text-uppercase">Operativo</span>
+                                </label>
+                                <label class="btn btn-outline-warning p-3 flex-fill">
+                                    <input type="radio" name="estado" value="Operativo con Fallas"> 
+                                    <i class="fas fa-exclamation-triangle fa-2x d-block mb-2"></i> 
+                                    <span class="font-weight-bold text-uppercase">Con Fallas</span>
+                                </label>
+                                <label class="btn btn-outline-danger p-3 flex-fill">
+                                    <input type="radio" name="estado" value="No Operativo"> 
+                                    <i class="fas fa-times-circle fa-2x d-block mb-2"></i> 
+                                    <span class="font-weight-bold text-uppercase">No Operativo</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Derecha: Materiales -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 border-left-info">
+            <div class="card-header bg-white py-3">
+                <h5 class="m-0 font-weight-bold text-info"><i class="fas fa-comment-alt mr-2"></i>Observaciones</h5>
+            </div>
+            <div class="card-body">
+                <textarea class="form-control" name="observaciones" id="observaciones" rows="3"></textarea>
+            </div>
+        </div>
+        <% if (aviso.tipoAviso != 3) { %>
+            <div class="card shadow-sm border-0 border-left-info">
+                <div class="card-header bg-white py-3">
+                    <h5 class="m-0 font-weight-bold text-info"><i class="fas fa-box mr-2"></i>Materiales y Refacciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="position-relative">
+                        <label class="font-weight-bold text-muted">Buscador de Suministros</label>
+                        <div class="input-group input-group-lg">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted"></i></span>
+                            </div>
+                            <input type="text" id="busquedaMat" class="form-control border-left-0" placeholder="Nombre o código..." onkeyup="buscarMateriales(this)" style="font-size: 1.1rem;">
+                        </div>
+                        
+                        <div id="resMat" class="list-group position-absolute w-100 shadow mt-1" style="z-index: 1050; display: none;"></div>
+                    </div>
+
+                    <div class="table-responsive mt-4">
+                        <table class="table table-hover border" id="tablaMat">
+                            <thead class="bg-light">
+                                <tr class="font-weight-bold text-dark" style="font-size: 0.9rem;">
+                                    <th>Material</th>
+                                    <th width="110">Cant.</th>
+                                    <th width="40"></th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size: 1.05rem;">
+                                <!-- Contenido dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="alert  text-center py-5">
+                <i class="fas fa-info-circle mb-3 d-block fa-3x text-muted"></i>
+                <h5 class="text-muted">Carga de materiales no disponible para este tipo de aviso.</h5>
+            </div>
+        <% } %>
+<%if(aviso.tipoAviso==1){ if (plantilla && plantilla.campos && plantilla.campos.length > 0) { %>
+    <div class="card shadow-sm border-0 border-left-primary mb-4">
+        <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between" style="cursor: pointer;"data-toggle="collapse" data-target="#collapsePlantilla" aria-expanded="true">
+            <h5 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list-check mr-2"></i>Detalles de <%= plantilla.nombre %>
+            </h5>
+            <span class="badge badge-pill badge-light text-muted">Items: <%= plantilla.campos.length %></span>
+        </div>
+        <div id="collapsePlantilla" class="collapse show">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="pl-4" style="width: 60%">Parámetro / Tarea</th>
+                                <th class="text-center" style="width: 40%">Valor / Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% 
+                                // Ordenamos los campos por la propiedad 'orden'
+                                const camposOrdenados = plantilla.campos.sort((a, b) => a.orden - b.orden);
+                                camposOrdenados.forEach(function(campo) { 
+                                    if(campo.activo) { 
+                            %>
+                                <tr>
+                                    <td class="pl-4 py-3">
+                                        <span class="d-block font-weight-bold text-dark"><%= campo.nombre %></span>
+                                        <% if(campo.tipo === 'valores') { %>
+                                            <small class="text-muted">Rango: <%= campo.min %> - <%= campo.max %></small>
+                                        <% } %>
+                                    </td>
+                                    <td class="pr-4 py-3">
+                                        <% if (campo.tipo === 'opciones') { %>
+                                            <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
+                                                <label class="btn btn-outline-success btn-sm w-100">
+                                                    <input type="radio" name="campo_<%= campo.id %>" value="Si" required> <i class="fas fa-check mr-1"></i> Sí
+                                                </label>
+                                                <label class="btn btn-outline-danger btn-sm w-100">
+                                                    <input type="radio" name="campo_<%= campo.id %>" value="No"> <i class="fas fa-times mr-1"></i> No
+                                                </label>
+                                            </div>
+                                        <% } else if (campo.tipo === 'valores') { %>
+                                            <div class="input-group input-group-sm">
+                                                <input type="number" 
+                                                    name="campo_<%= campo.id %>" 
+                                                    class="form-control text-center font-weight-bold" 
+                                                    placeholder="0"
+                                                    min="<%= campo.min %>" 
+                                                    max="<%= campo.max %>" 
+                                                    required>
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text bg-light"><i class="fas fa-hashtag text-muted"></i></span>
+                                                </div>
+                                            </div>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% 
+                                    } 
+                                }); 
+                            %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+<% }} %>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-12 text-right">
+        <!-- Input oculto para la hora de inicio -->
+        <input type="text" style="display: none;" id="horaInicioAtencion" name="horaInicioAtencion" value="<%= avisoEquipo.fechaInicio %>">
+        <input type="text" style="display: none;" id="avisoEquipo" name="avisoEquipo" value="<%= avisoEquipo.id %>">
+        <input type="text" style="display: none;" id="aviso" name="aviso" value="<%= aviso.id %>">
+        <input type="text" style="display: none;" id="equipo" name="equipo" value="<%= equipo.id %>">
+        <input type="text" style="display: none;" id="intervencion" name="intervencion" value="<%= intervencionId %>">
+        
+        <button type="button" id="btnGuardarAtencion" class="btn btn-primary btn-lg px-5 shadow" onclick="procesarEnvio()">
+            <i class="fas fa-save mr-2"></i> Terminar
+        </button>
+    </div>
+</div>
+
+
+    </section>
+</div>
+
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="/plugins/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+    $('#collapsePlantilla').on('hidden.bs.collapse', function () {
+        // Acciones extra cuando se cierra si las necesitas
+    });
+    $('#collapsePlantilla').on('shown.bs.collapse', function () {
+        // Acciones extra cuando se abre
+    });
+function procesarEnvio() {
+    const $btn = $('#btnGuardarAtencion');
+    const tipoAviso = <%= aviso.tipoAviso %>;
+    const intervencion = <%= intervencionId %>;
+    let datosPlantilla
+    // 1. Validar Contadores (Solo si tipoAviso != 3 y 4)
+    if (tipoAviso != 3 && tipoAviso != 4) {
+        // Asumiendo que tus inputs tienen name="monocromoEntrada", etc.
+        const monoE = parseInt($('input[name="monocromoEntrada"]').val()) || 0;
+        const monoS = parseInt($('input[name="monocromoSalida"]').val()) || 0;
+        const colE = parseInt($('input[name="colorEntrada"]').val()) || 0;
+        const colS = parseInt($('input[name="colorSalida"]').val()) || 0;
+        const escE = parseInt($('input[name="escanerEntrada"]').val()) || 0;
+        const escS = parseInt($('input[name="escanerSalida"]').val()) || 0;
+
+        if (monoE > monoS || colE > colS || escE > escS) {
+            alert('¡Error! Los contadores de entrada no pueden ser mayores a los de salida.');
+            return;
+        }
+        if(tipoAviso==1){
+            
+            datosPlantilla = {
+                nombre: "<%= plantilla?plantilla.nombre:0 %>", // Tomado de la variable EJS
+                campos: []
+            };
+
+            // Recorremos los campos que definimos en el HTML anterior
+            // Usamos la variable 'plantilla' de EJS para saber qué IDs buscar
+            <% if(plantilla){plantilla.campos.forEach(function(campo) { %>
+                if (<%= campo.activo %>) {
+                    let valor = "";
+                    <% if (campo.tipo === 'opciones') { %>
+                        // Obtener valor de radio buttons
+                        valor = $("input[name='campo_<%= campo.id %>']:checked").val() || "";
+                    <% } else { %>
+                        // Obtener valor de input number
+                        valor = $("input[name='campo_<%= campo.id %>']").val();
+                    <% } %>
+
+                    datosPlantilla.campos.push({
+                        id: <%= campo.id %>,
+                        nombre: "<%= campo.nombre %>",
+                        tipo: "<%= campo.tipo %>",
+                        valor: valor
+                    });
+                }
+            <% })}; %>
+        }
+    }
+
+    // 2. Recopilar Materiales de la tabla
+    let materiales = [];
+    if(tipoAviso!=3){
+        $('#tablaMat tbody tr').each(function() {
+            const row = $(this);
+            materiales.push({
+                id: row.attr('id').replace('mat-', ''),
+                cantidad: parseInt(row.find('input').val()),
+                costopromedio: row.data('costopromedio'), // Asegúrate de guardar esto en agregarMat
+                preciopublico: row.data('preciopublico')
+            });
+        });
+    }
+
+    // 3. Estructurar Objeto Final
+    const dataFinal = {
+        avisoId: <%= aviso.id %>,
+        equipoId: <%= equipo.id %>,
+        avisoEquipoId: <%= avisoEquipo.id %>,
+        intervencion,
+        horaInicio: $('#horaInicioAtencion').val(),
+        estadoEquipo: $('input[name="estado"]:checked').val(),
+        observaciones: $('textarea[name="observaciones"]').val(),
+        contadores: $('#formAtencion').serializeArray(),
+        plantilla:datosPlantilla,
+        materiales: materiales // Puede ir vacío []
+    };
+
+    // 4. Envío por POST
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
+
+        $.post('/avisos/equipos/atender/guardar', dataFinal, function(res) {
+        if (res.status === 'next') {
+            swal.fire({
+                title: "¡Equipo Atendido!",
+                text: "Pasando al siguiente equipo pendiente...",
+                icon: "success",
+                timer: 2000,
+                buttons: false // Oculta el botón para que sea automático
+            }).then(() => {
+                window.location.href = `/avisos/equipos/atender/${res.avisoEquipoId}/${res.avisoId}/${res.intervencionId}`;
+            });
+        } else {
+            swal.fire({
+                title: "Atención Finalizada",
+                text: "Todos los equipos han sido atendidos. Generando reporte final...",
+                icon: "success",
+                timer: 2000,
+                buttons: false
+            }).then(() => {
+                window.location.href = `/avisos/intervencion/finalizar/${res.intervencionId}`;
+            });
+        }
+    }).fail(function(err) {
+        alert('Error al guardar');
+        $btn.prop('disabled', false).text('Terminar');
+    });
+}
+
+
+function buscarMateriales(input) {
+    let q = input.value;
+    let res = $('#resMat');
+
+    // Solo buscar a partir del tercer carácter
+    if (q.length < 3) { 
+        res.hide(); 
+        return; 
+    }
+
+    // Petición GET tradicional
+    $.get('/avisos/articulos/buscar', { q: q }, function(data) {
+        if (data && data.length > 0) {
+            res.empty().show();
+            
+            // Limitamos a 5 coincidencias como pediste
+            data.slice(0, 5).forEach(m => {
+                res.append(`
+                    <button type="button" class="list-group-item list-group-item-action py-2" 
+                        onclick="agregarMat('${m.id}', '${m.nombre}', ${m.existencia},${m.costopromedio},${m.preciopublico})">
+                        <div class="d-flex justify-content-between small">
+                            <span class="font-weight-bold text-uppercase">${m.nombre}</span>
+                            <span class="badge badge-info">Stock: ${m.existencia}</span>
+                        </div>
+                    </button>`);
+            });
+        } else {
+            res.hide();
+        }
+    }).fail(function() {
+        console.error("Error al buscar materiales");
+        res.hide();
+    });
+}
+
+
+function agregarMat(id, nombre, stock,costopromedio,preciopublico) {
+    if ($(`#mat-${id}`).length) return; // No duplicar
+
+    $('#tablaMat tbody').append(`
+        <tr id="mat-${id}" data-costopromedio=${costopromedio} data-preciopublico=${preciopublico}>
+            <td class="small align-middle">${nombre}</td>
+            <td>
+                <input type="number" class="form-control form-control-sm" 
+                    min="1" max="${stock}" value="1" 
+                    onchange="checkStock(this, ${stock})">
+            </td>
+            <td class="align-middle">
+                <a href="javascript:void(0)" class="text-danger" onclick="$('#mat-${id}').remove()">
+                    <i class="fas fa-trash"></i>
+                </a>
+            </td>
+        </tr>
+    `);
+    $('#resMat').hide();
+    $('#busquedaMat').val('');
+}
+
+function checkStock(el, max) {
+    if (parseInt(el.value) > max) {
+        alert('Existencia insuficiente. Máximo: ' + max);
+        el.value = max;
+    }
+}
+
+</script>

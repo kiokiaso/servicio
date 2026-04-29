@@ -1,0 +1,257 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+<link rel="stylesheet" href="/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+<style>
+    .table td { vertical-align: middle !important; }
+    .input-actual:focus { box-shadow: 0 0 5px rgba(0,123,255,.5); }
+    .bg-light-success { background-color: #e8f5e9; }
+    .bg-light-danger { background-color: #ffebee; }
+</style>
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Avisos</a></li>
+                        <li class="breadcrumb-item active">Remotos</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-dark font-weight-bold">Captura Masiva de Lecturas</h2>
+        <button type="button" class="btn btn-success shadow-sm px-4" onclick="guardarLecturas()">
+            <i class="fas fa-save mr-2"></i> Guardar Todo
+        </button>
+    </div>
+
+    <form id="formLecturas">
+        <% avisos.forEach(aviso => { %>
+            <div class="card shadow-sm border-0 mb-5">
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="m-0">
+                        <i class="fas fa-file-invoice mr-2"></i> Aviso #<%= aviso.id %> 
+                        <span class="badge badge-light ml-2 text-dark"><%= aviso.cliente.razonsocial %>(<%=aviso.ubicacion.nombre%>)</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr class="text-uppercase text-muted" style="font-size: 0.8rem;">
+                                    <th class="pl-4">Equipo / Serie</th>
+                                    <th>Tipo</th>
+                                    <th class="text-center">Ant.</th>
+                                    <th class="text-center">Bonif.</th>
+                                    <th width="180">Lectura Actual</th>
+                                    <th width="150">Procesado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% aviso.equiposInvolucrados.forEach(eq => { %>
+                                    <% ['Monocromo', 'Color', 'Escaner'].forEach((tipo, index) => { 
+                                        const regAnterior = eq.lecturaAnteriorJSON.find(c => 
+                                            c.tipoContador.nombre.toUpperCase().includes(tipo.toUpperCase())
+                                        );
+                                        const valorAnt = regAnterior ? regAnterior.valor : 0;
+                                        const bonif = eq.bonificacionesCalculadas[tipo] || 0;
+                                        const rowId = `row_${eq.id}_${tipo}`;
+                                        const tipoContador=regAnterior ? regAnterior.tipoContador.id:0
+                                    %>
+                                    <tr id="<%= rowId %>">
+                                        <% if(index === 0) { %>
+                                            <td rowspan="3" class="pl-4 align-middle border-right">
+                                                <div class="font-weight-bold text-primary"><%= eq.equipo.numeroserie %></div>
+                                                <small class="text-muted d-block"><%= eq.equipo.marca %> <%= eq.equipo.modelo %></small>
+                                                <small class="badge badge-info"><%= eq.equipo.sitio || 'Sin Ubicación' %></small>
+                                            </td>
+                                        <% } %>
+                                        <td class="align-middle font-weight-bold text-dark"><%= tipo %></td>
+                                        <td class="align-middle text-center bg-light">
+                                            <span class="ant-val"><%= valorAnt %></span>
+                                        </td>
+                                        <td class="align-middle text-center text-info">
+                                            +<span class="bonif-val"><%= bonif %></span>
+                                        </td>
+                                        <td class="align-middle">
+                                            <input type="number" 
+                                                   class="form-control form-control-sm border-primary input-actual" 
+                                                   data-eq="<%= eq.id %>" 
+                                                   data-tipo="<%= tipo %>"
+                                                   data-ant="<%= valorAnt %>"
+                                                   data-bonif="<%= bonif %>"
+                                                   data-aviso="<%=aviso.id%>"
+                                                   data-tipocontador="<%=tipoContador%>"
+                                                   oninput="calcularProcesado(this)"
+                                                   placeholder="Ingrese lectura...">
+                                        </td>
+                                        <td class="align-middle text-center">
+                                            <input type="text" 
+                                                   class="form-control form-control-sm bg-light text-center font-weight-bold field-procesado" 
+                                                   readonly 
+                                                   value="0">
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </form>
+</div>
+
+
+    </section>
+</div>
+
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="/plugins/sweetalert2/sweetalert2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        var table = $('#avisosRemotos').DataTable({
+            
+            columnDefs: [
+                {
+                    searchable: false,
+                    orderable: false,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+    });
+
+   /**
+ * Calcula la diferencia en tiempo real al escribir la lectura actual
+ */
+function calcularProcesado(input) {
+    const actual = parseInt(input.value) || 0;
+    const anterior = parseInt(input.dataset.ant) || 0;
+    const bonif = parseInt(input.dataset.bonif) || 0;
+    
+    const row = input.closest('tr');
+    const displayProcesado = row.querySelector('.field-procesado');
+    
+    const resultado = actual - (anterior + bonif);
+    
+    displayProcesado.value = resultado;
+
+    // Feedback visual si el número es negativo (error de dedo)
+    if (resultado < 0) {
+        displayProcesado.classList.add('text-danger');
+        input.classList.add('is-invalid');
+    } else {
+        displayProcesado.classList.remove('text-danger');
+        input.classList.remove('is-invalid');
+    }
+}
+
+/**
+ * Recolecta todos los datos y los envía al controlador
+ */
+function guardarLecturas() {
+    const dataToSend = [];
+    const inputs = document.querySelectorAll('.input-actual');
+    
+    // Validar que no haya negativos
+    let errorCero = false;
+    let vacios=false;
+    
+    inputs.forEach(input => {
+        const actual = parseInt(input.value);
+        if (isNaN(actual)||actual=="") {
+            vacios=true
+            return
+        }; // Ignorar campos vacíos
+
+        const anterior = parseInt(input.dataset.ant);
+        const bonif = parseInt(input.dataset.bonif);
+        const aviso = parseInt(input.dataset.aviso);
+        const tipoContador = parseInt(input.dataset.tipocontador);
+        const procesado = actual - (anterior + bonif);
+
+        if (procesado < 0) errorCero = true;
+
+        dataToSend.push({
+            equipoInvolucrado: input.dataset.eq,
+            tipo: input.dataset.tipo,
+            lecturaAnterior: anterior,
+            bonificacion: bonif,
+            lecturaActual: actual,
+            procesado: procesado,
+            aviso:aviso,
+            tipoContador:tipoContador
+        });
+    });
+
+    if (errorCero) {
+       return Swal.fire({
+            title: '¡Lectura Inválida!',
+            text: 'Una de las lecturas es menor al contador anterior + bonificación. Por favor, verifícala.',
+            icon: 'warning',
+            confirmButtonText: 'Corregir'
+        });
+    }if (vacios) {
+       return Swal.fire({
+            title: '¡Campos Incompletos!',
+            text: 'Todos los campos de lectura actual deben tener un valor numérico.',
+            icon: 'error',
+            confirmButtonText: 'Revisar'
+        });
+    }
+
+    if (dataToSend.length === 0) {
+        Swal.fire('Aviso', 'No has ingresado ninguna lectura.', 'info');
+    }
+    console.log(dataToSend)
+    Swal.fire({
+        title: '¿Guardar lecturas?',
+        text: `Se registrarán ${dataToSend.length} contadores.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.post('/avisos/remotos/guardar', { lecturas: dataToSend })
+                .done(res => {
+                    Swal.fire('Éxito', 'Lecturas guardadas correctamente', 'success')
+                        .then(() => window.location.href = '/avisos/remotos');
+                })
+                .fail(err => Swal.fire('Error', 'Hubo un problema al guardar', 'error'));
+        }
+    });
+}
+</script>

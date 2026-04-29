@@ -1,0 +1,397 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+<style>
+    #datSeries {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datSeries .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+     #datClientes {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datClientes .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+</style>
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Lecturas</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item active">Lecturas</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearLectura">
+                      Crear Lectura
+                  </button> 
+            </div>
+            <!-- /.card-header -->
+            <!-- /.card-header -->
+            <div class="card-body p-2">
+                <table class="display table table-bordered table-striped w-100" id="equipos">
+                  <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Cliente</th>
+                        <th>Ubicación</th>
+                        <th>Fecha de inicio</th>
+                        <th>Periodicidad</th>
+                        <th>Agrupar Equipos</th>
+                        <th>Observaciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% lecturas.forEach(c=>{ %>
+                        <tr class="fila-articulo" data-id="<%=c.id%>">
+                            <td><a href="/lecturas/<%=c.id%>" class="enlace"><%=c.nombre%></a></td>
+                            <td><%=c.cliente.razonsocial%><br>
+                                <% if(c.ubicacion&&c.ubicacion.oficinaAtencion===oficinaElegida.id){ %>
+                                    <span class="badge badge-danger">Póliza entre exi <%=c.oficina.nombre%></span> 
+                                <% }  %>
+                            </td>
+                            <td><%=c.ubicacion.nombre%></td>
+                            <td><%= new Date(c.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) %></td>
+                            <td><%=c.periodicidad%></td>
+                            <td><%=c.agruparequipos==true?'Si':'No'%></td>
+                            <td><%=c.observaciones%></td>
+                            
+                        </tr>                        
+                    <% })%>
+                  </tbody>
+                </table>
+              </div>
+              <!-- /.card-body -->
+            </div>
+          <!-- /.card -->
+    </section>
+</div>
+
+<!-- MODAL AGREGAR EQUIPO -->
+<div class="modal fade" id="crearLectura" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Crear Lectura</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" >
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+
+                    <div class="form-group row">    
+                        <label for="clienteNombre" class="col-sm-2 col-form-label">Cliente*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="clienteNombre" name="clienteNombre" required onkeyup="buscarCliente()">
+                             <div id="datClientes" style="display: none;">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="ubicacion" class="col-sm-2 col-form-label">Ubicación*</label>
+                        <div class="col-sm-10">
+                            <select name="ubicacion" id="ubicacion" class="form-control" onchange="buscarEquipos()">
+                                
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="inicio" class="col-sm-2 col-form-label">Fecha de inicio*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="inicio" name="inicio" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="fin" class="col-sm-2 col-form-label">Fecha de fin*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fin" name="fin" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="agrupar" class="col-sm-2 col-form-label">Agrupar elementos*</label>
+                        <div class="col-sm-10">
+                            <select name="agrupar" id="agrupar" class="form-control">
+                                <option value="true">Si</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="observaciones" class="col-sm-2 col-form-label">Observaciones*</label>
+                        <div class="col-sm-10">
+                            <textarea name="observaciones" id="observaciones" rows="3" class="form-control"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="table table-responsive">
+                        <table id="tablaEquipos" class="w-100">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Serie</th>
+                                    <th>Descripción</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarDatos()">Crear</button>
+                <input type="text" class="d-none" name="cliente" id="cliente" onchange="buscarUbicaciones()">
+                <input type="text" class="d-none" name="oficina" id="oficina" value="<%=oficinaElegida.id%>">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!--<script src="/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+<script src="/plugins/jszip/jszip.min.js"></script>
+<script src="/plugins/pdfmake/pdfmake.min.js"></script>
+<script src="/plugins/pdfmake/vfs_fonts.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>-->
+<script>
+    $(document).ready(function () {
+        var table = $('#equipos').DataTable({
+            stateSave: true,
+            
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+    });
+
+    function guardarDatos(){
+        let datos = [];
+        let oficina=document.getElementById('oficina').value;
+        let ubicacion=document.getElementById('ubicacion').value;
+        let cliente=document.getElementById('cliente').value;
+        let nombre=document.getElementById('nombre').value;
+        let inicio=document.getElementById('inicio').value;
+        let agrupar=document.getElementById('agrupar').value;
+        let fin=document.getElementById('fin').value;
+        /*if(agrupar=="True"){
+            agrupar=true
+        }else{
+            agrupar=false;
+        }*/
+        let observaciones=document.getElementById('observaciones').value;
+        $('.check-item:checked').each(function() {
+            let fila = $(this).closest('tr');
+            datos.push({ id: fila.data('id') });
+        });
+        if(datos.length==0){
+            return $(document).Toasts('create', {
+                class: 'bg-danger',
+                title: 'Error',
+                body: `Debes seleccionar por lo menos un equipo`,
+            })
+        }
+        $.post(
+            '/lecturas/crear',
+            {equipos:datos,oficina,ubicacion,cliente,nombre,inicio,agruparequipos:agrupar,observaciones,fin},
+            function (res) {
+                if(res.resp==1){
+                    window.location.href = `/lecturas/${res.lectura.id}`;
+                }
+            }).fail(function (res) {
+               $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    body: `Se ha producido un error al momento de crear la lectura`,
+                })
+            });
+    };
+
+    function buscarEquipos(){
+        var numero = document.getElementById("ubicacion").value;
+        var cliente = document.getElementById("cliente").value;
+        var oficina = document.getElementById("oficina").value;
+       
+            $.get(
+                '/lecturas/equipos/buscar',
+                { ubicacion: numero,oficina,cliente },
+                function (res) {
+                    const tbody = document.querySelector('#tablaEquipos tbody');
+                    let contenido=``;
+                    res.equipos.forEach(s => {
+                        contenido = contenido + `
+                            <tr class="fila-articulo" data-id="${s.id}">
+                                <td><input type="checkbox"  class="check-item"></td>
+                                <td>${s.numeroserie}</td>
+                                <td>${s.descripcion}</td>
+                                <td>${s.marca}</td>
+                                <td>${s.modelo}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML=contenido;
+            }).fail(function (res) {
+                document.getElementById('datSeries').innerHTML = "";
+                document.getElementById('datSeries').style = 'display:none';
+                $('#serieId').val("");
+            });
+        
+    }
+    function buscarCliente(){
+        var numero = document.getElementById("clienteNombre").value;
+        var contenido="<div><strong>Clic al cliente para elegirlo</strong></div>";
+        if(numero.length>2){
+            $.get(
+                '/equipos/clientes/buscar',
+                { cliente: numero},
+                function (res) {
+                    res.clientes.forEach(s => {
+                        contenido = contenido + `<div style="cursor:pointer"><a class="suggest-element" data="${s.id}" nombre="${s.razonsocial}"  id="${s.id}" oficina="${s.oficina.id}">${s.razonsocial}</a></div>`;
+
+                    });
+                    $('#datClientes').fadeIn(1000).html(contenido);
+                    $('.suggest-element').on('click', function () {
+                                //Obtenemos la id unica de la sugerencia pulsada
+                        var id = $(this).attr('id');
+                        var nombre = $(this).attr('nombre');
+                        var oficina = $(this).attr('oficina');
+                        $('#clienteNombre').val($('#' + id).attr('data'));
+                                    //Hacemos desaparecer el resto de sugerencias
+                        document.getElementById('datClientes').innerHTML = "";
+                        document.getElementById('datClientes').style = 'display:none';
+                                    //alert('Has seleccionado el '+id+' '+$('#'+id).attr('data'));
+                        $('#clienteNombre').val(nombre);
+                        $('#cliente').val(id);
+                        $('#oficina').val(oficina);
+                        $('#cliente').trigger('change'); 
+                    });
+            }).fail(function (res) {
+                document.getElementById('datSeries').innerHTML = "";
+                document.getElementById('datSeries').style = 'display:none';
+                $('#cliente').val("");
+            });
+        }
+        else{
+            $('#cliente').val("");
+        }
+    }
+    function buscarUbicaciones(){
+        const cliente=document.getElementById("cliente").value
+        const oficina=document.getElementById("oficina").value
+        $.get(
+            '/equipos/clientes/buscar/ubicaciones',
+            { cliente,oficina},
+            function (res) {
+                let contenido=`<option value="0">Elige una ubicación</option>`;
+                res.ubicaciones.forEach(s => {
+                    contenido+=`<option value="${s.id}">${s.nombre}</option>`
+                });
+                document.getElementById('ubicacion').innerHTML=contenido;
+        }).fail(function (res) {
+            $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido obtener los datos del cliente',
+                });
+        });
+    }
+
+
+  function obtenerDato(id){
+    $.get(
+        '/maestros/autos/obtener',
+        {id:id},
+        function (respuesta) {
+            $('#editarAuto').modal('show');
+            document.getElementById('placaEditar').value=respuesta.data.placa;
+            document.getElementById('descripcionEditar').value=respuesta.data.descripcion;
+            document.getElementById('kilometrajeEditar').value=respuesta.data.kilometraje;
+            document.getElementById('idAuto').value=respuesta.data.id;
+        }
+    ).fail(function(res){
+        descErrores=descErrores+"No se ha encontrado el puesto";
+        document.getElementById('mostrarErroresAutoEditar').innerHTML=descErrores;
+        $('#errorsAutoEditar').show();
+        return false;
+    });
+  }
+</script>

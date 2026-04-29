@@ -1,0 +1,555 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+<link rel="stylesheet" href="/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+
+<style>
+    #vista-cierre-intervencion{
+        background-color: #f4f7f6; color: #333; font-size: 1.1rem; 
+    }
+    .card { border: none; border-radius: 12px; }
+    .card-header { border-top-left-radius: 12px !important; border-top-right-radius: 12px !important; }
+    .section-title { border-left: 5px solid #007bff; padding-left: 15px; margin: 25px 0 15px; font-weight: bold; color: #444; }
+    .equipo-card { transition: transform 0.2s; border: 1px solid #dee2e6; }
+    .equipo-card:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .canvas-container {
+        background: #fff;
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        width: 100%;
+        max-width: 500px;
+        height: 250px; /* Altura fija obligatoria */
+        margin: 0 auto;
+    }
+    #canvasFirma {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+    }
+    .btn-lg { padding: 12px 30px; font-weight: bold; }
+    label { font-weight: 600; color: #555; }
+    .badge-soft-danger { background-color: #f8d7da; color: #721c24; }
+    .badge-soft-secondary { background-color: #e2e3e5; color: #383d41; }
+    .font-weight-600 { font-weight: 600; }
+</style>
+
+<div class="content-wrapper">
+    
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+
+<div class="container py-5" id="vista-cierre-intervencion">
+    <div class="card shadow-lg">
+        <!-- Encabezado -->
+        <div class="card-header bg-dark text-white p-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0"><i class="fas fa-file-signature mr-2"></i> Cierre de Intervención</h3>
+                <span class="badge badge-light p-2">Folio: #<%= intervencion.id %></span>
+            </div>
+        </div>
+
+        <div class="card-body p-5">
+            <!-- 1. Información General -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5 class="text-primary font-weight-bold"><i class="fas fa-user-tie"></i> Cliente</h5>
+                    <p class="h5 text-dark mb-1"><%= intervencion.cliente.razonsocial %></p>
+                    <small class="text-muted"><%= intervencion.cliente.rfc || '' %></small>
+                </div>
+                <div class="col-md-6 border-left">
+                    <h5 class="text-primary font-weight-bold"><i class="fas fa-map-marker-alt"></i> Ubicación</h5>
+                    <p class="h5 text-dark mb-1"><%= intervencion.ubicacion.nombre %></p>
+                    <p class="small text-muted mb-0"><%= intervencion.ubicacion.direccion %></p>
+                </div>
+            </div>
+
+            <div class="section-title">EQUIPOS ATENDIDOS Y DETALLES</div>
+
+            <!-- 2. Equipos, Contadores y Materiales -->
+            <% if(intervencion.equipos && intervencion.equipos.length > 0) { %>
+                <% intervencion.equipos.forEach(eq => { %>
+                <div class="card equipo-card mb-4 bg-white shadow-sm">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 mb-3 d-flex justify-content-between">
+                                <span class="h5"><i class="fas fa-print text-secondary"></i> <strong><%= eq.equipo.modelo %></strong></span>
+                                <span class="font-weight-bold small">Serie: <%= eq.equipo.numeroserie %></span>
+                            </div>
+                            <!-- Contadores -->
+                            <div class="col-md-6">
+                                <p class="mb-2 font-weight-bold text-info"><i class="fas fa-tachometer-alt"></i> Contadores</p>
+                                <table class="table table-sm table-borderless small">
+                                    <tr>
+                                        <th>Contador</th>
+                                        <th>Valor Actual</th>
+                                        <%if(intervencion.tipoAviso===3){%>
+                                        <th>Valor Anterior</th>
+                                        <th>Bonificación</th>
+                                        <th>Procesado</th>
+                                        <%}%>
+                                    </tr>
+                                    <% eq.contadores.forEach(c => { %>
+                                        <tr class="border-bottom">
+                                            <td><%= c.nombreContador %></td>
+                                            <td class="text-right font-weight-bold">
+                                                <% if (intervencion.estado === 'pendiente') { %>
+                                                    <input type="number" 
+                                                        class="form-control form-control-sm input-cantidad" 
+                                                        value="<%= c.valor %>" 
+                                                        data-id="<%= c.id %>"
+                                                        onchange="actualizarCantidadContador(this,<%=eq.id%>,<%=c.id%>,<%=intervencion.tipoAviso%>)">
+                                                <% } else { %>
+                                                    <%= c.valor %>
+                                                <% } %>
+                                            </td>
+                                            <%if(intervencion.tipoAviso===3){%>
+                                                <td ><%=c.valorAnterior%></td>
+                                                <td ><%=c.bonificacion%></td>
+                                                <td id="p<%=eq.id%>-<%=c.id%>"><%=c.procesado%></td>
+                                            <%}%>
+                                        </tr>
+                                    <% }) %>
+                                </table>
+                            </div>
+                            <!-- Materiales -->
+                            <div class="col-md-6 border-left">
+                                <p class="mb-2 font-weight-bold text-warning"><i class="fas fa-box-open"></i> Refacciones/Consumibles</p>
+                                <% if(intervencion.tipoAviso!=3){%>
+                                <table class="table table-sm table-borderless small">
+                                    <thead>
+                                        <tr>
+                                            <th>Código-Descripción</th>
+                                            <th>Cantidad</th>
+                                            <th>Costo Público</th>
+                                            <th>Costo Promedio</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <% eq.articulos.forEach(m => { %>
+                                        <tr class="border-bottom" id="tr<%=m.id%>">
+                                            <td>
+                                                <%= m.detalleArticulo.codigo %> - <%= m.detalleArticulo.descripcion %> 
+                                                <small>(<%= m.detalleArticulo.modelo %>)</small>
+                                            </td>
+                                            <td class="text-right">
+                                                <% if (intervencion.estado === 'pendiente') { %>
+                                                    <input type="number" 
+                                                        class="form-control form-control-sm input-cantidad" 
+                                                        value="<%= m.cantidad %>" 
+                                                        data-id="<%= m.id %>"
+                                                        data-articulo="<%= m.articulo %>"
+                                                        onchange="actualizarCantidadMaterial(this)">
+                                                    
+                                                <% } else { %>
+                                                    <%= m.cantidad %>
+                                                <% } %>
+                                            </td>
+                                            <td class="text-right"><%= new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(m.costopublico) %></td>
+                                            <td class="text-right"><%= new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(m.costopromedio) %></td>
+                                            <td>
+                                                <% if (intervencion.estado === 'pendiente') { %>
+                                                   <button class="btn btn-sm btn-danger" onclick="eliminarMaterial(<%= m.id %>)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                    
+                                                <% } %>
+                                                
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </table>
+                                <%}else{%>
+                                    <div class="alert  text-center">
+                                        <i class="fas fa-info-circle  d-block fa-3x text-muted"></i>
+                                        <h5 class="text-muted">Carga de materiales no disponible para este tipo de aviso.</h5>
+                                    </div>
+                                <%}%>
+                            </div>
+<%if(intervencion.tipoAviso==1){ if (eq.plantilla && eq.plantilla.campos) { %>
+    <div class="card shadow-sm border-0 border-left-success mb-4 col-md-6">
+        <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between" 
+             style="cursor: pointer;" 
+             data-toggle="collapse" 
+             data-target="#collapseEditPlantilla_<%= eq.id %>">
+            
+            <h6 class="m-0 font-weight-bold text-success">
+                <i class="fas fa-clipboard-check mr-2"></i>
+                <%= eq.plantilla.plantillaNombre %> 
+                <small class="text-muted ml-2">(Revisión del <%= new Date(eq.plantilla.fechaRegistro).toLocaleDateString() %>)</small>
+            </h6>
+            <i class="fas fa-chevron-down text-muted"></i>
+        </div>
+
+        <div id="collapseEditPlantilla_<%= eq.id %>" class="collapse">
+            <div class="card-body p-0">
+                <form id="formPlantilla_<%= eq.id %>">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="pl-4">Parámetro</th>
+                                <th class="text-center" style="width: 200px;">Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% eq.plantilla.campos.forEach(function(campo, index) { %>
+                                <tr>
+                                    <td class="pl-4 align-middle">
+                                        <span class="font-weight-600 text-dark" style="font-size: 0.9rem;"><%= campo.nombre %></span>
+                                    </td>
+                                    <td class="pr-4 py-2">
+                                        <% if (intervencion.estado === 'pendiente') { %>
+                                            <input type="<%= campo.tipo === 'opciones' ? 'hidden' : 'number' %>" 
+                                                class="form-control-plantilla"
+                                                data-id="<%= campo.id %>"
+                                                data-nombre="<%= campo.nombre %>"
+                                                data-tipo="<%= campo.tipo %>"
+                                                name="valor_<%= index %>" 
+                                                value="<%= campo.valor %>"
+                                                <%= campo.tipo === 'opciones' ? '' : 'class="form-control form-control-sm"' %>
+                                            >
+                                            <% if (campo.tipo === 'opciones') { %>
+                                                <select class="form-control form-control-sm selector-opcion" 
+                                                        onchange="$(this).prev().val(this.value)">
+                                                    <option value="Si" <%= campo.valor === 'Si' ? 'selected' : '' %>>Sí</option>
+                                                    <option value="No" <%= campo.valor === 'No' ? 'selected' : '' %>>No</option>
+                                                </select>
+                                               
+                                            <% } 
+                                                
+                                         } else { %>
+                                            <span class="badge badge-pill <%= campo.valor === 'No' ? 'badge-soft-danger' : 'badge-soft-secondary' %> p-2 d-block">
+                                                <%= campo.valor %> <%= campo.tipo === 'valores' ? '%' : '' %>
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                    
+                    <% if (intervencion.estado === 'pendiente') { %>
+                        <div class="card-footer bg-white text-right">
+                            <button type="button" class="btn btn-primary btn-sm shadow-sm" 
+                                    onclick="actualizarPlantilla('<%= eq.id %>')">
+                                <i class="fas fa-save mr-1"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    <% } %>
+                </form>
+            </div>
+        </div>
+    </div>
+<% } }%>
+
+                        </div>
+                    </div>
+                </div>
+                <% }) %>
+            <% } else { %>
+                <div class="alert alert-warning">No se registraron equipos en esta intervención.</div>
+            <% } %>
+
+            <!-- 3. Formulario de Cierre -->
+            <form id="formFinalizarIntervencion">
+                <input type="hidden" name="id" value="<%= intervencion.id %>">
+                
+                <div class="section-title">OBSERVACIONES Y FIRMA</div>
+                <% if (intervencion.estado === 'pendiente') { %>
+                <div class="form-group mb-4">
+                    <label>Observaciones Finales del Servicio</label>
+                    <textarea name="observaciones" class="form-control form-control-lg" rows="3" placeholder="Escriba aquí el reporte final para el cliente..." required></textarea>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <label>Contacto que autoriza</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-white"><i class="fas fa-user"></i></span>
+                            </div>
+                            <select name="contacto" id="selectContacto" class="form-control form-control-lg select-profesional" required>
+                                <option value="0">-- Seleccionar Contacto --</option>
+                                <% contactos.forEach(c => { %>
+                                    <option value="<%= c.id %>"><%= c.nombre %></option>
+                                <% }) %>
+                            </select>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalContacto">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo de Firma -->
+                <div class="row justify-content-center mt-5">
+                    <div class="col-md-10 text-center">
+                        <label class="d-block mb-2">Firma del Cliente</label>
+                        <div class="canvas-container shadow-sm mx-auto">
+                            <canvas id="canvasFirma"></canvas>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="signaturePad.clear()">
+                            <i class="fas fa-eraser"></i> Limpiar Firma
+                        </button>
+                    </div>
+                </div>
+                <% } else { %>
+                    <!-- MODO LECTURA: Se muestra cuando ya está finalizada -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card bg-light border-0 shadow-sm mb-4">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-7">
+                                            <label class="text-primary font-weight-bold">Observaciones de Cierre:</label>
+                                            <p class="lead text-dark font-italic">
+                                                "<%= intervencion.observacionesFinales || 'Sin observaciones registradas.' %>"
+                                            </p>
+                                            
+                                            <hr>
+                                            
+                                            <label class="text-primary font-weight-bold">Autorizado por:</label>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-white rounded-circle p-2 shadow-sm mr-3">
+                                                    <i class="fas fa-user-check fa-2x text-success"></i>
+                                                </div>
+                                                <div>
+                                                    <h5 class="mb-0"><%= (intervencion.contacto) ? intervencion.contacto.nombre : 'Sin contacto (Autorización directa)' %></h5>
+                                                    <small class="text-muted"><%= (intervencion.contacto) ? intervencion.contacto.puesto : '' %></small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-5 text-center border-left">
+                                            <label class="text-primary font-weight-bold d-block">Firma Digital Registrada</label>
+                                            <div class="bg-white p-2 rounded shadow-sm d-inline-block border" style="width: 100%; max-width: 300px;">
+                                                <% if (intervencion.firma) { %>
+                                                    <img src="<%= intervencion.firma %>" class="img-fluid" alt="Firma del Cliente">
+                                                <% } else { %>
+                                                    <div class="py-5 text-muted">No se registró firma física</div>
+                                                <% } %>
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="badge badge-success px-3 py-2">
+                                                    <i class="fas fa-lock mr-1"></i> Documento Firmado
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+
+                <div class="mt-5">
+                    <% if(intervencion.estado=='pendiente'){%>
+                    <button type="submit" class="btn btn-success btn-lg btn-block shadow">
+                        <i class="fas fa-check-circle mr-2"></i> FINALIZAR INTERVENCIÓN
+                    </button>
+                    <% }else{%>
+                    <a href="/avisos/descargar-pdf/<%= intervencion.id %>" target="_blank" class="btn btn-outline-primary btn-lg btn-block shadow-sm">
+                        <i class="fas fa-file-download mr-2"></i> Descargar PDF
+                    </a>
+                    <%}%>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Nuevo Contacto -->
+<div class="modal fade" id="modalContacto" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Agregar Nuevo Contacto</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="newNombre" class="form-control" placeholder="Ej. Juan Pérez">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="text" id="newTelefono" class="form-control" placeholder="1234567890">
+                </div>
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="newEmail" class="form-control" placeholder="juan@empresa.com">
+                </div>
+                <div class="form group">
+                    <label>Puesto</label>
+                    <select name="newPuesto" id="newPuesto" class="form-control">
+                        <% tipoContacto.forEach(tc=>{ %>
+                            <option value="<%=tc.id%>"><%=tc.nombre%></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary px-4" onclick="fnGuardarContacto()">Guardar Contacto</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    </section>
+</div>
+
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+
+<!-- SweetAlert2 -->
+<script src="/plugins/sweetalert2/sweetalert2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+<script>
+    const canvas = document.querySelector("#canvasFirma");
+    const signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgb(255, 255, 255)',
+        penColor: 'black'
+    });
+    function actualizarPlantilla(equipoId) {
+        const form = document.getElementById(`formPlantilla_${equipoId}`);
+        const nuevosValores = [];
+
+        // Buscamos todos los inputs que contienen los datos de la plantilla dentro de este formulario
+        $(form).find('.form-control-plantilla').each(function() {
+            const input = $(this);
+            nuevosValores.push({
+                id: input.data('id').toString(),
+                nombre: input.data('nombre'),
+                tipo: input.data('tipo'),
+                valor: input.val()
+            });
+        });
+
+        if (nuevosValores.length === 0) return;
+
+        Swal.fire({ title: 'Actualizando equipo...', didOpen: () => { Swal.showLoading() } });
+
+        $.post('/avisos/intervencion/plantilla/actualizar', {
+            equipoId: equipoId, // El ID de IntervencionEquipo
+            campos: nuevosValores
+        })
+        .done(function(res) {
+            Swal.fire('¡Éxito!', 'Los datos del equipo han sido actualizados.', 'success');
+        })
+        .fail(function(err) {
+            Swal.fire('Error', 'No se pudo actualizar el equipo.', 'error');
+        });
+    }
+    function resizeCanvas() {
+        // Esto ajusta la resolución interna al tamaño que el CSS le da al elemento
+        const ratio =  Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        
+        signaturePad.clear(); // Limpia el canvas al redimensionar para evitar distorsiones
+    }
+    function actualizarCantidadMaterial(input){
+        console.log(input.value)
+        console.log(input.getAttribute('data-id'))
+        console.log(input.getAttribute('data-articulo'))
+        $.post('/avisos/intervencion/material/actualizar', {materialId:input.getAttribute('data-id'),nuevaCantidad:input.value}, function(res) {
+            if(res.ok==true){
+                swal.fire("¡Éxito!", "Cantidad actualizada de forma correcta", "success");
+            }else{
+                swal.fire("¡Error!", res.msj, "error");
+            }
+            
+        }).fail(() => swal.fire("Error", "No se ha podido actualizar la cantidad", "error"));
+    }
+    function eliminarMaterial(id){
+        
+        $.post('/avisos/intervencion/material/eliminar', {materialId:id}, function(res) {
+            if(res.ok==true){
+                swal.fire("¡Éxito!", "El articulo se ha elminado de forma correcta", "success");
+                document.getElementById(`tr${id}`).remove();
+            }else{
+                swal.fire("¡Error!", res.msj, "error");
+            }
+            
+        }).fail(() => swal.fire("Error", "No se ha podido actualizar la cantidad", "error"));
+    }
+    function actualizarCantidadContador(input,equipo,id,tipo){
+        $.post('/avisos/intervencion/contador/actualizar', {id:input.getAttribute('data-id'),valor:input.value}, function(res) {
+            if(res.ok==true){
+                if(tipo==3){
+                    document.getElementById(`p${equipo}-${id}`).innerHTML = res.procesado;
+                }
+                
+                swal.fire("¡Éxito!", "Cantidad actualizada de forma correcta", "success");
+            }else{
+                swal.fire("¡Error!", res.msj, "error");
+            }
+            
+        }).fail(() => swal.fire("Error", "No se ha podido actualizar la cantidad", "error"));
+    }
+    // Ejecutar al cargar la página
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function fnGuardarContacto() {
+        const payload = {
+            nombre: $('#newNombre').val(),
+            puesto: $('#newPuesto').val(),
+            telefono: $('#newTelefono').val(),
+            email: $('#newEmail').val(),
+            cliente: '<%= intervencion.cliente.id %>',
+            ubicacion: '<%= intervencion.ubicacion.id %>'
+        };
+
+        if(!payload.nombre || !payload.email) return swal.fire("Atención", "Nombre y Email son obligatorios", "warning");
+
+        $.post('/avisos/contactos/crear', payload, function(res) {
+            $('#selectContacto').append(`<option value="${res.id}" selected>${res.nombre}</option>`);
+            $('#modalContacto').modal('hide');
+            swal.fire("¡Éxito!", "Contacto guardado correctamente", "success");
+            // Limpiar campos
+            $('#newNombre, #newPuesto, #newEmail').val('');
+        }).fail(() => swal.fire("Error", "No se pudo guardar el contacto", "error"));
+    }
+
+    // Finalizar Intervención
+    $('#formFinalizarIntervencion').on('submit', function(e) {
+        e.preventDefault();
+        if (signaturePad.isEmpty()) {
+            return swal.fire("Falta Firma", "Por favor, el cliente debe firmar para finalizar", "warning");
+        }
+        const firma = signaturePad.toDataURL('image/jpeg',0.7);
+        const data = $(this).serializeArray();
+        data.push({ name: 'firmaBase64', value: firma });
+        swal.fire({
+            title: "¿Confirmar Cierre?",
+            text: "Se generará el reporte y se dará por terminada la intervención.",
+            icon: "info",
+            buttons: ["Regresar", "Sí, finalizar"],
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.post('/avisos/intervencion/cerrar', data, function(res) {
+                    swal.fire("¡Completado!", "La intervención ha sido cerrada con éxito", "success")
+                    .then(() => window.location.href = `/avisos/${res.intUpdated.aviso}`);
+                }).fail(() => swal.fire("Error", "Error al procesar el cierre", "error"));
+            }
+        });
+    });
+</script>

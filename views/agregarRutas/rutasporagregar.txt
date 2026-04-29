@@ -1,0 +1,48 @@
+
+  'GET /': 'DashboardController.index',
+
+ //Autenticación no entran a la politica de permiso
+  'get /login': 'AuthController.Inicio',
+  'post /login': 'AuthController.login',
+  'get /logout': 'AuthController.logout',
+  'post /forget-password': 'AuthController.forgetPassword',
+  'post /recover-password': 'AuthController.recoverPassword',
+  'get /forget-password': 'AuthController.olvidarContrasena',
+  'get /recover-password/:id': 'AuthController.recuperarContrasena',
+//ADMINISTRACIÓN DEL SISTEMA
+  //User
+  'GET /admin/users':'admin/AdminUserController.index',
+  'POST /admin/users':'admin/AdminUserController.create',
+  //Permisos
+  *'GET /admin/permisos':'admin/AdminPermissionController.index',
+  *'POST /admin/permisos/crear':'admin/AdminPermissionController.crear',
+  *'GET /admin/permisos/obtener':'admin/AdminPermissionController.obtener',
+  *'POST /admin/permisos/actualizar':'admin/AdminPermissionController.actualizar',
+  *'GET /admin/permisos/eliminar/:id':'admin/AdminPermissionController.eliminar',
+  *'GET /admin/permisos/activar/:id':'admin/AdminPermissionController.activar',
+  //Roles
+  'GET /admin/roles':'admin/AdminRoleController.index',
+  'POST /admin/roles/crear':'admin/AdminRoleController.crear',
+  'GET /admin/roles/obtener':'admin/AdminRoleController.obtener',
+  'POST /admin/roles/actualizar':'admin/AdminRoleController.actualizar',
+  'GET /admin/roles/eliminar/:id':'admin/AdminRoleController.eliminar',
+  'GET /admin/roles/activar/:id':'admin/AdminRoleController.activar',
+  *'GET /admin/roles/permisos/:id':'admin/AdminRoleController.permisos',
+  *'POST /admin/roles/permisos/guardar':'admin/AdminRoleController.guardarPermisos',
+
+  //Oficinas
+  'GET /admin/oficinas':'admin/AdminOficinasController.index',
+  'POST /admin/oficinas/crear':'admin/AdminOficinasController.crear',
+  'GET /admin/oficinas/obtener':'admin/AdminOficinasController.obtener',
+  'POST /admin/oficinas/actualizar':'admin/AdminOficinasController.actualizar',
+  'GET /admin/oficinas/eliminar/:id':'admin/AdminOficinasController.eliminar',
+  'GET /admin/oficinas/activar/:id':'admin/AdminOficinasController.activar',
+  'GET /admin/oficinas/:id':'admin/AdminOficinasController.mostrarOficina',
+
+//CONECTAR SOCKET CON LA SESIÓN
+  'GET /user/sync-socket':'AuthController.syncSocket',
+//Chat
+  'POST /chat/connect': 'ChatController.onConnect',
+  'POST /chat/send': 'ChatController.sendMessage',
+  //Autorizaciones
+  *'GET /non-authorization/:ruta/:metodo':'AuthController.nonAuthorization',

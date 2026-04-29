@@ -1,0 +1,464 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+<style>
+    #datSeries {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datSeries .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+     #datClientes {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datClientes .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+</style>
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Equipos dados de baja</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item active">Equipos en baja</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearEquipo">
+                      Crear Equipo
+                  </button> 
+            </div>
+            <!-- /.card-header -->
+            <!-- /.card-header -->
+            <div class="card-body p-2">
+                <table class="display table table-bordered table-striped w-100" id="equipos">
+                  <thead>
+                    <tr>
+                        <th>Serie</th>
+                        <th>Descripción</th>
+                        <th>Marca</th>
+                        <th>Modelo</th>
+                        <th>Sitio</th>
+                        <th>Cliente</th>
+                        <th>Fecha instalación</th>
+                        <th>Baja</th>
+                        <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% equipos.forEach(c=>{ %>
+                        <tr class="fila-articulo" data-id="<%=c.id%>">
+                            <td><a href="/equipos/<%=c.id%>" class="enlace"><%=c.numeroserie%></a></td>
+                            <td><%=c.descripcion%></td>
+                            <td><%=c.marca%></td>
+                            <td><%=c.modelo%></td>
+                            <td><%=c.sitio%></td>
+                            <td><%
+                                if(c.ubicacion&&c.ubicacion.oficinaAtencion===oficinaElegida.id){ %>
+                                    <%=c.cliente.razonsocial%><span class="badge badge-danger">Póliza entre exi <%=c.oficina.nombre%></span> 
+                                <% }else{
+                                    
+                                    if(c.tipoequipo=="ARRENDAMIENTO"){%>
+                                        <%=c.cliente.razonsocial%> <span class="badge badge-primary">ARRENDAMIENTO</span>
+                                    <%}if(c.tipoequipo=="POLIZA"){%>
+                                        <%=c.cliente.razonsocial%> <span class="badge badge-success">Póliza de servicio</span>
+                                    <%} if(c.tipoequipo=="TYM"){%>
+                                        <%=c.cliente.razonsocial%> <span class="badge badge-secondary">TYM</span>
+                                    <%}%>  
+                                <% }
+                            %></td>
+                            <td><%=c.fechainstalacion%></td>
+                            <td><%=c.fechabaja%>-<%=c.motivobaja%></td>
+                            <td>
+                                <% if(!c.esPolizaForanea){ %>
+                                    <a href="/equipos/desactivar/<%=c.id%>" class="btn btn-danger">Devolver</a>
+                                <% }%>
+                            </td>
+                        </tr>                        
+                    <% })%>
+                  </tbody>
+                </table>
+              </div>
+              <!-- /.card-body -->
+            </div>
+          <!-- /.card -->
+    </section>
+</div>
+
+<!-- MODAL AGREGAR EQUIPO -->
+<div class="modal fade" id="crearEquipo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Agregar Equipo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" method="POST" id="formAgregarEquipo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+
+                    <div class="form-group row">    
+                        <label for="cliente" class="col-sm-2 col-form-label">Cliente*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="cliente" name="cliente" required onkeyup="buscarCliente()">
+                             <div id="datClientes" style="display: none;">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="ubicacionEquipo" class="col-sm-2 col-form-label">Ubicación*</label>
+                        <div class="col-sm-10">
+                            <select name="ubicacionEquipo" id="ubicacionEquipo" class="form-control">
+                                
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="numeroserie" class="col-sm-2 col-form-label">Serie*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="numeroserie" name="numeroserie" required onkeyup="buscarSeries()">
+                            <div id="datSeries" style="display: none;">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="marca" class="col-sm-2 col-form-label">Marca*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="marca" name="marca" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="modelo" class="col-sm-2 col-form-label">Modelo*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="modelo" name="modelo" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="descripcion" class="col-sm-2 col-form-label">Descripción*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="descripcion" name="descripcion" required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="sitio" class="col-sm-2 col-form-label">Sitio de instalación*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="sitio" name="sitio" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="notas" class="col-sm-2 col-form-label">Notas*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="notas" name="notas" required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">    
+                        <label for="fechainstalacion" class="col-sm-2 col-form-label">Fecha de instalación*</label>
+                        <div class="col-sm-10">
+                            <input type="date" class="form-control" id="fechainstalacion" name="fechainstalacion" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tamano" class="col-sm-2 col-form-label">Tamaño*</label>
+                        <div class="col-sm-10">
+                            <select name="tamano" id="tamano" class="form-control">
+                                <option value="A3">A3</option>
+                                <option value="A4">A4</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipocolor" class="col-sm-2 col-form-label">Color o Monocromo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipocolor" id="tipocolor" class="form-control">
+                                <option value="Color">Color</option>
+                                <option value="Monocromo">Monocromo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoequipo" class="col-sm-2 col-form-label">Tipo de Equipo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipoequipo" id="tipoequipo" class="form-control">
+                                <option value="POLIZA">Póliza</option>
+                                <option value="TYM">TYM</option>
+                                <option value="ARRENDAMIENTO">Arrendamiento</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="plantilla" class="col-sm-2 col-form-label">Plantilla*</label>
+                        <div class="col-sm-10">
+                            <select name="plantillas" id="plantillas" class="form-control">
+                                <% plantillas.forEach(u=>{ %>
+                                    <option value="<%=u.id%>"><%=u.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                <input type="text" class="d-none" name="clienteEquipo" id="clienteEquipo" onchange="buscarUbicaciones()">
+                <input type="text" class="d-none" name="serieId" id="serieId">
+                <input type="text" class="d-none" name="articuloId" id="articuloId">
+                <input type="text" class="d-none" name="oficinaEquipo" id="oficinaEquipo">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!--<script src="/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+<script src="/plugins/jszip/jszip.min.js"></script>
+<script src="/plugins/pdfmake/pdfmake.min.js"></script>
+<script src="/plugins/pdfmake/vfs_fonts.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>-->
+<script>
+    $(document).ready(function () {
+        var table = $('#equipos').DataTable({
+            stateSave: true,
+            
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+    });
+
+    $("#formAgregarEquipo").on('submit', function(e){
+            e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/clientes/equipo/agregar',
+                    data: new FormData(this),
+                    contentType: false,
+                    cache: false,
+                    processData:false,
+                    success: function(){
+                    ob = $.parseJSON(arguments[2].responseText);
+                        if(ob.resp==1){
+                            $(document).Toasts('create', {
+                                class: 'bg-success',
+                                title: 'Correcto',
+                                subtitle: 'exito',
+                                body: `Se ha agregado de forma correcta el equipo ${ob.equipo.numeroserie}`,
+                            })
+                            setTimeout(() => {
+                                location.reload();
+                            },1000);
+                        }
+                        else{
+                            $(document).Toasts('create', {
+                                class: 'bg-danger',
+                                title: 'Error',
+                                subtitle: '',
+                                body: ob.mensaje,
+                            });
+                        }
+                        $('#crearEquipo').modal('hide');
+                    }
+                });
+    });
+
+    function buscarSeries(){
+        var numero = document.getElementById("numeroserie").value;
+        var oficina = document.getElementById("oficinaEquipo").value;
+        var contenido="<div><strong>Clic a la serie para elegirla</strong></div>";
+        if(numero.length>2){
+            $.get(
+                '/almacen/series/buscar',
+                { numero: numero,oficina },
+                function (res) {
+                    res.series.forEach(s => {
+                        contenido = contenido + `<div style="cursor:pointer"><a class="suggest-element" data="${s.id}" serie="${s.serie}"  id="${s.id}" marca="${s.articulo.marca}" modelo="${s.articulo.modelo}" articulo="${s.articulo.id}" descripcion="${s.articulo.descripcion}" tipocolor="${s.articulo.tipocolor}" tamano="${s.articulo.tamano}" >${s.serie}</a></div>`;
+
+                    });
+                    $('#datSeries').fadeIn(1000).html(contenido);
+                    $('.suggest-element').on('click', function () {
+                                //Obtenemos la id unica de la sugerencia pulsada
+                        var id = $(this).attr('id');
+                        var marca = $(this).attr('marca');
+                        var modelo = $(this).attr('modelo');
+                        var articulo = $(this).attr('articulo');
+                        var descripcion = $(this).attr('descripcion');
+                        var tipocolor = $(this).attr('tipocolor');
+                        var tamano = $(this).attr('tamano');
+                        var serie = $(this).attr('serie');
+                        $('#numeroserie').val($('#' + id).attr('data'));
+                                    //Hacemos desaparecer el resto de sugerencias
+                        document.getElementById('datSeries').innerHTML = "";
+                        document.getElementById('datSeries').style = 'display:none';
+                                    //alert('Has seleccionado el '+id+' '+$('#'+id).attr('data'));
+                        $('#serieId').val(id);
+                        $('#articuloId').val(articulo);
+                        $('#marca').val(marca);
+                        $('#modelo').val(modelo);
+                        $('#descripcion').val(descripcion);
+                        $('#tipocolor').val(tipocolor);
+                        $('#tamano').val(tamano);
+                        $('#numeroserie').val(serie);
+                        //$('#idArticulo').trigger('change'); 
+                    });
+            }).fail(function (res) {
+                document.getElementById('datSeries').innerHTML = "";
+                document.getElementById('datSeries').style = 'display:none';
+                $('#serieId').val("");
+            });
+        }
+        else{
+            document.getElementById('datSeries').innerHTML = "";
+            document.getElementById('datSeries').style = 'display:none';
+            $('#serieId').val("");
+        }
+    }
+    function buscarCliente(){
+        var numero = document.getElementById("cliente").value;
+        var contenido="<div><strong>Clic al cliente para elegirlo</strong></div>";
+        if(numero.length>2){
+            $.get(
+                '/equipos/clientes/buscar',
+                { cliente: numero},
+                function (res) {
+                    res.clientes.forEach(s => {
+                        contenido = contenido + `<div style="cursor:pointer"><a class="suggest-element" data="${s.id}" nombre="${s.razonsocial}"  id="${s.id}" oficina="${s.oficina.id}">${s.razonsocial}</a></div>`;
+
+                    });
+                    $('#datClientes').fadeIn(1000).html(contenido);
+                    $('.suggest-element').on('click', function () {
+                                //Obtenemos la id unica de la sugerencia pulsada
+                        var id = $(this).attr('id');
+                        var nombre = $(this).attr('nombre');
+                        var oficina = $(this).attr('oficina');
+                        $('#cliente').val($('#' + id).attr('data'));
+                                    //Hacemos desaparecer el resto de sugerencias
+                        document.getElementById('datClientes').innerHTML = "";
+                        document.getElementById('datClientes').style = 'display:none';
+                                    //alert('Has seleccionado el '+id+' '+$('#'+id).attr('data'));
+                        $('#cliente').val(nombre);
+                        $('#clienteEquipo').val(id);
+                        $('#oficinaEquipo').val(oficina);
+                        $('#clienteEquipo').trigger('change'); 
+                    });
+            }).fail(function (res) {
+                document.getElementById('datSeries').innerHTML = "";
+                document.getElementById('datSeries').style = 'display:none';
+                $('#clienteEquipo').val("");
+            });
+        }
+        else{
+            document.getElementById('datSeries').innerHTML = "";
+            document.getElementById('datSeries').style = 'display:none';
+            $('#clienteEquipo').val("");
+        }
+    }
+    function buscarUbicaciones(){
+        const cliente=document.getElementById("clienteEquipo").value
+        const oficina=document.getElementById("oficinaEquipo").value
+        $.get(
+            '/equipos/clientes/buscar/ubicaciones',
+            { cliente,oficina},
+            function (res) {
+                let contenido=``;
+                res.ubicaciones.forEach(s => {
+                    contenido+=`<option value="${s.id}">${s.nombre}</option>`
+                });
+                document.getElementById('ubicacionEquipo').innerHTML=contenido;
+        }).fail(function (res) {
+            $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'Error',
+                    subtitle: '',
+                    body: 'Ha ocurrido un error y no se ha podido obtener los datos del cliente',
+                });
+        });
+    }
+
+
+  function obtenerDato(id){
+    $.get(
+        '/maestros/autos/obtener',
+        {id:id},
+        function (respuesta) {
+            $('#editarAuto').modal('show');
+            document.getElementById('placaEditar').value=respuesta.data.placa;
+            document.getElementById('descripcionEditar').value=respuesta.data.descripcion;
+            document.getElementById('kilometrajeEditar').value=respuesta.data.kilometraje;
+            document.getElementById('idAuto').value=respuesta.data.id;
+        }
+    ).fail(function(res){
+        descErrores=descErrores+"No se ha encontrado el puesto";
+        document.getElementById('mostrarErroresAutoEditar').innerHTML=descErrores;
+        $('#errorsAutoEditar').show();
+        return false;
+    });
+  }
+</script>

@@ -1,0 +1,1262 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Configuración de los maestros</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Admin</a></li>
+                        <li class="breadcrumb-item active">Maestros</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+   
+    <section class="content">
+        <div class="row g-3 p-2">
+            <!--INICIO DE PRIORIDAD-->
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 ">
+                    <div class="card-header">
+                    <h3 class="card-title">Prioridad</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <!-- /.card-header -->
+                    <div class="card-body p-2">
+                        <table class="display table table-bordered table-striped w-100" id="prioridades">
+                        <thead>
+                            <tr>
+                            <th style="width: 10px">Id</th>
+                            <th>Nombre</th>
+                            <th>Color</th>
+                            <th>Fecha de creación</th>
+                            <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% prioridades.forEach(prioridad=>{ %>
+                            <tr>
+                            <td><%=prioridad.id%></td>
+                            <td><a class="enlaceModificar" onclick="obtenerPrioridad(<%=prioridad.id%>)"><%=prioridad.nombre%></a></td>
+                            <td align="center">
+                                <span class="badge" style="background-color: <%=prioridad.color%>;width:20px;height:20px;">
+                                </span>
+                            </td>
+                            <td>
+                                <%= new Date(prioridad.createdAt).toLocaleString('es-ES', { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    second: '2-digit' 
+                                }) %>
+                            </td>
+                            <td><%
+                                if(prioridad.activo==1){ %>
+                                    <a class="btn btn-danger" href="/admin/maestros/prioridades/eliminar/<%=prioridad.id%>">Desactivar</a>
+                                <% }else{ %>
+                                    <a class="btn btn-success" href="/admin/maestros/prioridades/activar/<%=prioridad.id%>">Activar</a>
+                                <% } %>
+                            </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearPrioridad">
+                            Crear Prioridad
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- / FIN DE PRIORIDAD -->
+            <!-- / INICIO DE CONTACTO -->
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 ">
+                    <div class="card-header">
+                    <h3 class="card-title">Tipo de Contacto</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <!-- /.card-header -->
+                    <div class="card-body p-2">
+                        <table class="display table table-bordered table-striped w-100" id="tiposContacto">
+                        <thead>
+                            <tr>
+                            <th style="width: 10px">Id</th>
+                            <th>Nombre</th>
+                            <th>Fecha de creación</th>
+                            <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% tiposContacto.forEach(contacto=>{ %>
+                            <tr>
+                            <td><%=contacto.id%></td>
+                            <td><a class="enlaceModificar" onclick="obtenerTipoContacto(<%=contacto.id%>)"><%=contacto.nombre%></a></td>
+                            <td>
+                                <%= new Date(contacto.createdAt).toLocaleString('es-ES', { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    second: '2-digit' 
+                                }) %>
+                            </td>
+                            <td><%
+                                if(contacto.activo==1){ %>
+                                    <a class="btn btn-danger" href="/admin/maestros/tipos-contacto/eliminar/<%=contacto.id%>">Desactivar</a>
+                                <% }else{ %>
+                                    <a class="btn btn-success"
+                                        href="/admin/maestros/tipos-contacto/activar/<%=contacto.id%>">Activar</a>
+                                <% } %>
+                            </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearTipoContacto">
+                            Crear Tipo Contacto
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- / FIN DE CONTACTO -->
+        </div>
+    </section>
+    <section class="content">
+        <div class="row g-3 p-2">
+            <!--INICIO DE TIPO DE INTERVENCIONES-->
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 ">
+                    <div class="card-header">
+                    <h3 class="card-title">Tipo de intervención</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <!-- /.card-header -->
+                    <div class="card-body p-2">
+                        <table class="display table table-bordered table-striped w-100" id="tipoIntervenciones">
+                        <thead>
+                            <tr>
+                            <th style="width: 10px">Id</th>
+                            <th>Nombre</th>
+                            <th>Fecha de creación</th>
+                            <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% tiposIntervencion.forEach(intervencion=>{ %>
+                            <tr>
+                            <td><%=intervencion.id%></td>
+                            <td><a class="enlaceModificar" onclick="obtenerTipoIntervencion(<%=intervencion.id%>)"><%=intervencion.nombre%></a></td>
+                            
+                            <td>
+                                <%= new Date(intervencion.createdAt).toLocaleString('es-ES', { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    second: '2-digit' 
+                                }) %>
+                            </td>
+                            <td><%
+                                if(intervencion.activo==1){ %>
+                                    <a class="btn btn-danger" href="/admin/maestros/tipos-intervencion/eliminar/<%=intervencion.id%>">Desactivar</a>
+                                <% }else{ %>
+                                    <a class="btn btn-success" href="/admin/maestros/tipos-intervencion/activar/<%=intervencion.id%>">Activar</a>
+                                <% } %>
+                            </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearTipoIntervencion">
+                            Crear Tipo de Intervencion
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- / FIN DE TIPO DE INTERVENCIONES -->
+            <!-- / INICIO DE TIPO DE CONTRATOS -->
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 ">
+                    <div class="card-header">
+                    <h3 class="card-title">Tipos de Contrato</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <!-- /.card-header -->
+                    <div class="card-body p-2">
+                        <table class="display table table-bordered table-striped w-100" id="tiposContrato">
+                        <thead>
+                            <tr>
+                            <th style="width: 10px">Id</th>
+                            <th>Nombre</th>
+                            <th>Fecha de creación</th>
+                            <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% tiposContrato.forEach(contrato=>{ %>
+                            <tr>
+                            <td><%=contrato.id%></td>
+                            <td><a class="enlaceModificar" onclick="obtenerTipoContrato(<%=contrato.id%>)"><%=contrato.nombre%></a></td>
+                            <td>
+                                <%= new Date(contrato.createdAt).toLocaleString('es-ES', { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    second: '2-digit' 
+                                }) %>
+                            </td>
+                            <td><%
+                                if(contrato.activo==1){ %>
+                                    <a class="btn btn-danger" href="/admin/maestros/tipos-contrato/eliminar/<%=contrato.id%>">Desactivar</a>
+                                <% }else{ %>
+                                    <a class="btn btn-success"
+                                        href="/admin/maestros/tipos-contrato/activar/<%=contrato.id%>">Activar</a>
+                                <% } %>
+                            </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearTipoContrato">
+                            Crear Tipo de Contrato
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- / FIN DE TIPO DE CONTRATOS -->
+        </div>
+    </section>
+    <section class="content">
+        <div class="row g-3 p-2">
+            <!--INICIO DE TIPO DE AVISOS-->
+            <div class="col-12 col-sm-12">
+                <div class="card h-100 ">
+                    <div class="card-header">
+                    <h3 class="card-title">Tipo de Avisos</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <!-- /.card-header -->
+                    <div class="card-body p-2">
+                        <table class="display table table-bordered table-striped w-100" id="tipoAvisos">
+                        <thead>
+                            <tr>
+                            <th style="width: 10px">Id</th>
+                            <th>Nombre</th>
+                            <th>Tiempo de respuesta</th>
+                            <th>Fecha de creación</th>
+                            <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% tiposAvisos.forEach(avisos=>{ %>
+                            <tr>
+                            <td><%=avisos.id%></td>
+                            <td><a class="enlaceModificar" onclick="obtenerTipoAvisos(<%=avisos.id%>)"><%=avisos.nombre%></a></td>
+                            <td><%=avisos.troficinas%></td>
+                            <td>
+                                <%= new Date(avisos.createdAt).toLocaleString('es-ES', { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    second: '2-digit' 
+                                }) %>
+                            </td>
+                            <td><%
+                                if(avisos.activo==1){ %>
+                                    <a class="btn btn-danger" href="/admin/maestros/tipos-avisos/eliminar/<%=avisos.id%>">Desactivar</a>
+                                <% }else{ %>
+                                    <a class="btn btn-success" href="/admin/maestros/tipos-avisos/activar/<%=avisos.id%>">Activar</a>
+                                <% } %>
+                            </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearTipoAvisos">
+                            Crear Tipo de Avisos
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- / FIN DE TIPO DE AVISOS -->
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="row g-3 p-2">
+            <!--INICIO DE TIPO DE PROEBLEMAS-->
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 ">
+                    <div class="card-header">
+                    <h3 class="card-title">Tipo de problemas</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <!-- /.card-header -->
+                    <div class="card-body p-2">
+                        <table class="display table table-bordered table-striped w-100" id="tipoProblemas">
+                        <thead>
+                            <tr>
+                            <th style="width: 10px">Id</th>
+                            <th>Nombre</th>
+                            <th>Duración</th>
+                            <th>Tipo de Aviso</th>
+                            <th>Fecha de creación</th>
+                            <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% tipoProblemas.forEach(problema=>{ %>
+                            <tr>
+                            <td><%=problema.id%></td>
+                            <td><a class="enlaceModificar" onclick="obtenerTipoProblemas(<%=problema.id%>)"><%=problema.nombre%></a></td>
+                            <td><%=problema.duracion%></td>
+                            <td><%=problema.tipoAvisos.nombre%></td>
+                            
+                            <td>
+                                <%= new Date(problema.createdAt).toLocaleString('es-ES', { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    second: '2-digit' 
+                                }) %>
+                            </td>
+                            <td><%
+                                if(problema.activo==1){ %>
+                                    <a class="btn btn-danger" href="/admin/maestros/tipos-problemas/eliminar/<%=problema.id%>">Desactivar</a>
+                                <% }else{ %>
+                                    <a class="btn btn-success" href="/admin/maestros/tipos-problemas/activar/<%=problema.id%>">Activar</a>
+                                <% } %>
+                            </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearTipoProblemas">
+                            Crear Tipo de Problemas
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- / FIN DE TIPO DE PROBLEMAS -->
+            <!-- / INICIO DE TIPO DE CONTADORES -->
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 ">
+                    <div class="card-header">
+                    <h3 class="card-title">Tipos de Contadores</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <!-- /.card-header -->
+                    <div class="card-body p-2">
+                        <table class="display table table-bordered table-striped w-100" id="tipoContadores">
+                        <thead>
+                            <tr>
+                            <th style="width: 10px">Id</th>
+                            <th>Nombre</th>
+                            <th>Tipo contador</th>
+                            <th>Tipo Aviso</th>
+                            <th>Fecha de creación</th>
+                            <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% tipoContadores.forEach(contador=>{ %>
+                            <tr>
+                            <td><%=contador.id%></td>
+                            <td><a class="enlaceModificar" onclick="obtenerTipoContadores(<%=contador.id%>)"><%=contador.nombre%></a></td>
+                            <td><%=contador.tipocontador%></td>
+                            <td><%=contador.tipoAvisos.nombre%></td>
+                            <td>
+                                <%= new Date(contador.createdAt).toLocaleString('es-ES', { 
+                                    day: '2-digit', 
+                                    month: '2-digit', 
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    second: '2-digit' 
+                                }) %>
+                            </td>
+                            <td><%
+                                if(contador.activo==1){ %>
+                                    <a class="btn btn-danger" href="/admin/maestros/tipo-contadores/eliminar/<%=contador.id%>">Desactivar</a>
+                                <% }else{ %>
+                                    <a class="btn btn-success"
+                                        href="/admin/maestros/tipo-contadores/activar/<%=contador.id%>">Activar</a>
+                                <% } %>
+                            </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearTipoContadores">
+                            Crear Tipo de Contador
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- / FIN DE TIPO DE CONTADORES -->
+        </div>
+    </section>
+</div>
+
+
+<!-- MODAL CREAR PRIORIDAD -->
+<div class="modal fade" id="crearPrioridad" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearPrioridadLabel">Crear Prioridad</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/prioridades/crear" method="POST" id="formCrearPrioridad">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsPrioridad" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresPrioridad"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="color" class="col-sm-2 col-form-label">Color</label>
+                        <div class="col-sm-10">
+                            <input type="color" class="form-control" id="color" name="color" placeholder="Móvil">
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR PRIORIDAD -->
+<div class="modal fade" id="editarPrioridad" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarPrioridadLabel">Editar Prioridad</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/prioridades/actualizar" method="POST" id="formEditarPrioridad">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsPrioridadEditar" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresPrioridadEditar"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombreEditar" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreEditar" name="nombreEditar" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="colorEditar" class="col-sm-2 col-form-label">Color</label>
+                        <div class="col-sm-10">
+                            <input type="color" class="form-control" id="colorEditar" name="colorEditar" placeholder="Móvil">
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="form-control d-none" id="idPrioridad" name="idPrioridad" placeholder="" required>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL CREAR TIPO DE CONTACTO -->
+<div class="modal fade" id="crearTipoContacto" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearTipoContactoLabel">Crear Tipo de Contacto</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipos-contacto/crear" method="POST" id="formCrearTipoContacto">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoContacto" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoContacto"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR TIPO DE CONTACTO -->
+<div class="modal fade" id="editarTipoContacto" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarTipoContactoLabel">Editar Tipo de Contacto</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipos-contacto/actualizar" method="POST" id="formEditarTipoContacto">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoContactoEditar" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoContactoEditar"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombreEditarTC" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreEditarTC" name="nombreEditarTC" placeholder="Nombre" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="form-control d-none" id="idTipoContacto" name="idTipoContacto" placeholder="" required>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL CREAR TIPOS DE INTERVENCION -->
+<div class="modal fade" id="crearTipoIntervencion" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearTipoIntervencionLabel">Crear Tipo de Intervención</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipos-intervencion/crear" method="POST" id="formCrearTipoIntervencion">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoIntervencion" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoIntervencion"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR TIPOS DE INTERVENCION -->
+<div class="modal fade" id="editarTipoIntervencion" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarTipoIntervencionLabel">Editar Tipo de intervención</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipos-intervencion/actualizar" method="POST" id="formEditarTipoIntervencion">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoIntervencionEditar" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoIntervencionEditar"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombreEditarTI" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreEditarTI" name="nombreEditarTI" placeholder="NombreTI" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="form-control d-none" id="idTipoIntervencion" name="idTipoIntervencion" placeholder="" required>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL CREAR TIPO DE CONTACTO -->
+<div class="modal fade" id="crearTipoContrato" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearTipoContratoLabel">Crear Tipo de Contrato</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipos-contrato/crear" method="POST" id="formCrearTipoContrato">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoContrato" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoContrato"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR TIPO DE CONTACTO -->
+<div class="modal fade" id="editarTipoContrato" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarTipoContratoLabel">Editar Tipo de Contrato</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipos-contrato/actualizar" method="POST" id="formEditarTipoContrato">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoContratoEditar" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoContratoEditar"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombreEditarTCont" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreEditarTCont" name="nombreEditarTCont" placeholder="" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="form-control d-none" id="idTipoContrato" name="idTipoContrato" placeholder="" required>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL CREAR TIPO DE AVISOS -->
+<div class="modal fade" id="crearTipoAvisos" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearAvisosLabel">Crear Avisos</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipos-avisos/crear" method="POST" id="formCrearAvisos">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsAvisos" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresAvisos"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <!--<div class="form-group row">
+                        <label for="color" class="col-sm-2 col-form-label">Color</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="color" name="color" placeholder="Móvil">
+                        </div>
+                    </div>-->
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="troficinas" name="troficinas">
+                        <label class="form-check-label" for="troficinas">Tomar en cuenta en tiempos de respuesta de la oficina</label>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR PRIORIDAD -->
+<div class="modal fade" id="editarTipoAvisos" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarAvisosLabel">Editar Tipo de Avisos</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipos-avisos/actualizar" method="POST" id="formEditarAvisos">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsAvisosEditar" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresAvisosEditar"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombreEditar" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreEditarAvisos" name="nombreEditarAvisos" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="troficinasEditar" name="troficinasEditar">
+                        <label class="form-check-label" for="troficinasEditar">Tomar en cuenta en tiempos de respuesta de la oficina</label>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="form-control d-none" id="idAvisos" name="idAvisos" placeholder="" required>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL CREAR TIPO DE PROBLEMAS -->
+<div class="modal fade" id="crearTipoProblemas" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearTipoProblemasLabel">Crear Tipo de problemas</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipo-problemas/crear" method="POST" id="formCrearTipoProblemas">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoProblemas" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoProblemas"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="duracion" class="col-sm-2 col-form-label">Duración*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="duracion" name="duracion" placeholder="00:15" required >
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoAvisos" class="col-sm-2 col-form-label">Tipo Avisos*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="tipoAvisos" id="tipoAvisos" >
+                                <option value="0">Elige un Tipo de aviso</option>
+                                <% tiposAvisos.forEach(aviso=>{ %>
+                                  <option value="<%=aviso.id%>"><%=aviso.nombre%></option>
+                                <% }) %>
+
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR TIPO DE PROBLEMAS -->
+<div class="modal fade" id="editarTipoProblemas" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarTipoProblemasLabel">Editar Tipo de Problemas</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipo-problemas/actualizar" method="POST" id="formEditarTipoProblemas">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoProblemasEditar" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoProblemasEditar"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombreEditarTP" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreEditarTP" name="nombreEditarTP" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="duracionEditarTP" class="col-sm-2 col-form-label">Duración*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="duracionEditarTP" name="duracionEditarTP" placeholder="00:15" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoAvisoEditarTP" class="col-sm-2 col-form-label">Tipo Avisos*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="tipoAvisoEditarTP" id="tipoAvisoEditarTP" >
+                                <option value="0">Elige un Tipo de aviso</option>
+                                <% tiposAvisos.forEach(aviso=>{ %>
+                                  <option value="<%=aviso.id%>"><%=aviso.nombre%></option>
+                                <% }) %>
+
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="form-control d-none" id="idTipoProblema" name="idTipoProblema" placeholder="" required>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL CREAR TIPO DE CONTADORES -->
+<div class="modal fade" id="crearTipoContadores" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearTipoContadorLabel">Crear Tipo de problemas</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipo-contadores/crear" method="POST" id="formCrearTipoContador">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoContador" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoContador"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipocontador" class="col-sm-2 col-form-label">Tipo Contador*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="tipocontador" id="tipocontador" >
+                                <option value="Entrada">Entrada</option>
+                                <option value="Salida">Salida</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="variable" class="col-sm-2 col-form-label">Variable*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="variable" name="variable" placeholder="variable" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoAvisos" class="col-sm-2 col-form-label">Tipo Avisos*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="tipoAvisos" id="tipoAvisos" >
+                                <option value="0">Elige un Tipo de aviso</option>
+                                <% tiposAvisos.forEach(aviso=>{ %>
+                                  <option value="<%=aviso.id%>"><%=aviso.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR TIPO DE CONTADORES -->
+<div class="modal fade" id="editarTipoContadores" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarTipoContadorLabel">Editar Tipo de Contadores</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/tipo-contadores/actualizar" method="POST" id="formEditarTipoContador">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsTipoContadorEditar" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresTipoContadorEditar"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombreEditarTCO" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreEditarTCO" name="nombreEditarTCO" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipocontadorTCO" class="col-sm-2 col-form-label">Tipo Contador*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="tipocontadorTCO" id="tipocontadorTCO" >
+                                <option value="Entrada">Entrada</option>
+                                <option value="Salida">Salida</option>
+                                
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="variableTCO" class="col-sm-2 col-form-label">Variable*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="variableTCO" name="variableTCO" placeholder="variable" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipoAvisoEditarTCO" class="col-sm-2 col-form-label">Tipo Avisos*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="tipoAvisoEditarTCO" id="tipoAvisoEditarTCO" >
+                                <option value="0">Elige un Tipo de aviso</option>
+                                <% tiposAvisos.forEach(aviso=>{ %>
+                                  <option value="<%=aviso.id%>"><%=aviso.nombre%></option>
+                                <% }) %>
+
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="form-control d-none" id="idTipoContadores" name="idTipoContadores" placeholder="" required>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+
+<script>
+   $(document).ready(function () {
+        var t = $('#prioridades').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+        var t = $('#tiposContacto').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+        var t = $('#tipoIntervenciones').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+        var t = $('#tiposContrato').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+        var t = $('#tipoAvisos').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+        var t = $('#tipoProblemas').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+        var t = $('#tipoContadores').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+
+        //t.buttons().container().appendTo('#inventario_wrapper .col-md-6:eq(0)');   
+    });
+    function obtenerPrioridad(id){
+        $.get(
+            '/admin/maestros/prioridades/obtener',
+            {id:id},
+            function (respuesta) {
+                $('#editarPrioridad').modal('show');
+                document.getElementById('nombreEditar').value=respuesta.data.nombre;
+                document.getElementById('idPrioridad').value=respuesta.data.id;
+                document.getElementById('colorEditar').value=respuesta.data.color;
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado la prioridad";
+            document.getElementById('mostrarErroresPrioridadEditar').innerHTML=descErrores;
+            $('#errorsPrioridadEditar').show();
+            return false;
+        });
+    }
+    function obtenerTipoContacto(id){
+        $.get(
+            '/admin/maestros/tipos-contacto/obtener',
+            {id:id},
+            function (respuesta) {
+                $('#editarTipoContacto').modal('show');
+                document.getElementById('nombreEditarTC').value=respuesta.data.nombre;
+                document.getElementById('idTipoContacto').value=respuesta.data.id;
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado el tipo de contacto";
+            document.getElementById('mostrarErroresTipoContactoEditar').innerHTML=descErrores;
+            $('#errorsTipoContactoEditar').show();
+            return false;
+        });
+    }
+    function obtenerTipoIntervencion(id){
+        $.get(
+            '/admin/maestros/tipos-intervencion/obtener',
+            {id:id},
+            function (respuesta) {
+                $('#editarTipoIntervencion').modal('show');
+                document.getElementById('nombreEditarTI').value=respuesta.data.nombre;
+                document.getElementById('idTipoIntervencion').value=respuesta.data.id;
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado el tipo de intervencion";
+            document.getElementById('mostrarErroresTipoIntervencionEditar').innerHTML=descErrores;
+            $('#errorsTipoIntervencionEditar').show();
+            return false;
+        });
+    }
+    function obtenerTipoContrato(id){
+        $.get(
+            '/admin/maestros/tipos-contrato/obtener',
+            {id:id},
+            function (respuesta) {
+                $('#editarTipoContrato').modal('show');
+                document.getElementById('nombreEditarTCont').value=respuesta.data.nombre;
+                document.getElementById('idTipoContrato').value=respuesta.data.id;
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado el tipo de contrato";
+            document.getElementById('mostrarErroresTipoContratoEditar').innerHTML=descErrores;
+            $('#errorsTipoContratoEditar').show();
+            return false;
+        });
+    }
+    function obtenerTipoAvisos(id){
+        $.get(
+            '/admin/maestros/tipos-avisos/obtener',
+            {id:id},
+            function (respuesta) {
+                $('#editarTipoAvisos').modal('show');
+                document.getElementById('nombreEditarAvisos').value=respuesta.data.nombre;
+                document.getElementById('troficinasEditar').checked=respuesta.data.troficinas;
+                
+                document.getElementById('idAvisos').value=respuesta.data.id;
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado el tipo de Aviso";
+            document.getElementById('mostrarErroresAvisosEditar').innerHTML=descErrores;
+            $('#errorsAvisosEditar').show();
+            return false;
+        });
+    }
+    function obtenerTipoProblemas(id){
+        $.get(
+            '/admin/maestros/tipo-problemas/obtener',
+            {id:id},
+            function (respuesta) {
+                $('#editarTipoProblemas').modal('show');
+                document.getElementById('nombreEditarTP').value=respuesta.data.nombre;
+                document.getElementById('duracionEditarTP').value=respuesta.data.duracion;
+                document.getElementById('tipoAvisoEditarTP').value=respuesta.data.tipoAvisos;
+                
+                document.getElementById('idTipoProblema').value=respuesta.data.id;
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado el tipo de Problema";
+            document.getElementById('mostrarErroresTipoProblemaEditar').innerHTML=descErrores;
+            $('#errorsTipoProblemaEditar').show();
+            return false;
+        });
+    }
+    function obtenerTipoContadores(id){
+        $.get(
+            '/admin/maestros/tipo-contadores/obtener',
+            {id:id},
+            function (respuesta) {
+                $('#editarTipoContadores').modal('show');
+                document.getElementById('nombreEditarTCO').value=respuesta.data.nombre;
+                document.getElementById('tipocontadorTCO').value=respuesta.data.tipocontador;
+                document.getElementById('tipoAvisoEditarTCO').value=respuesta.data.tipoAvisos;
+                
+                document.getElementById('idTipoContadores').value=respuesta.data.id;
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado el tipo de Contador";
+            document.getElementById('mostrarErroresTipoContadorEditar').innerHTML=descErrores;
+            $('#errorsTipoContadorEditar').show();
+            return false;
+        });
+    }
+</script>

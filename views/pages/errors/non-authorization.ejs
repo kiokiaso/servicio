@@ -1,0 +1,45 @@
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Permisos</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item">Errores</li>
+                        <li class="breadcrumb-item active">Sin Autorización</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">No tienes autorización</h3>
+            </div>
+            <!-- /.card-header -->
+            <!-- /.card-header -->
+            <div class="card-body p-4">
+                <%=session.usuario.nombre%> no tienes permiso para entrar a la ruta solicitada <b>"<%=ruta%>"</b> con el método <b>"<%=metodo%>"</b>, por favor, si es algo que tu puesto debe tener, ponte en contacto con el administrador del sistema por teams y enviale este mensaje, para que te sea otorgado el permiso o te expliquen porque no tienes acceso.
+            </div>
+              <!-- /.card-body -->
+              <div class="card-footer">
+                  
+              </div>
+            </div>
+          <!-- /.card -->
+    </section>
+</div>
+
+
+
+<%- partial('../../partials/scripts/comun')%>

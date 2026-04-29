@@ -1,0 +1,57 @@
+
+module.exports = {
+  attributes: {
+    codigo:{
+        type:'string'
+    },
+    clavealterna:{
+        type:'string'
+    },
+    descripcion:{
+        type:'string'
+    },
+    marca:{
+        type:'string'
+    },
+    modelo:{
+        type:'string'
+    },
+    tipo:{
+        type:'string',
+        isIn:['EQUIPO','CONSUMIBLE','REFACCION','ACCESORIO'],//Obtenerlos por la linea de producto
+        required:true
+    },
+    tamano:{
+        type:'string',
+        defaultsTo:''
+    },
+    tipocolor:{
+        type:'string',
+        defaultsTo:''
+    },
+    preciopublico:{
+        type:'number',
+        columnType:'float'
+    },
+    rendimiento:{
+        type:'number',
+        defaultsTo:0
+    },
+    garantia:{
+        type:'number',
+        defaultsTo:0
+    },
+    existenciasOficinas:{
+        collection:'stockoficina',
+        via:'articulo'
+    },
+    existenciasUsuarios:{
+        collection:'stockusuario',
+        via:'articulo'
+    },
+    movimientos:{
+        collection:'movimientoinventario',
+        via:'articulo'
+    }
+  },
+};

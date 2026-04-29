@@ -1,0 +1,249 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+
+
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Permisos</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Admin</a></li>
+                        <li class="breadcrumb-item active">Permisos</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Permisos</h3>
+            </div>
+            <!-- /.card-header -->
+            <!-- /.card-header -->
+            <div class="card-body p-0">
+                <table class="display table table-bordered table-striped w-100" id="permisos">
+                  <thead>
+                    <tr>
+                      <th style="width: 10px">Id</th>
+                      <th>Nombre</th>
+                      <th>Ruta</th>
+                      <th>Metodo</th>
+                      <th>Fecha de creación</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                      <% permisos.forEach(permiso=>{ %>
+                    <tr>
+                      <td><%=permiso.id%></td>
+                      <td><a class="enlaceModificar" onclick="obtenerDato(<%=permiso.id%>)"><%=permiso.nombre%></a></td>
+                      <td><%=permiso.ruta%></td>
+                      <td><%=permiso.metodo%></td>
+                      <td>
+                        <%= new Date(permiso.createdAt).toLocaleString('es-ES', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            second: '2-digit' 
+                        }) %>
+                      </td>
+                      <td><%
+                        if(permiso.activo==1){ %>
+                            <a class="btn btn-danger"
+                                href="/admin/permisos/eliminar/<%=permiso.id%>">Desactivar</a>
+                        <% }else{ %>
+                            <a class="btn btn-success"
+                                href="/admin/permisos/activar/<%=permiso.id%>">Activar</a>
+                        <% } %>
+                      </td>
+                    </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+              <!-- /.card-body -->
+              <div class="card-footer">
+                  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearPermiso">
+                      Crear Permiso
+                  </button>
+              </div>
+            </div>
+          <!-- /.card -->
+    </section>
+</div>
+
+
+<!-- MODAL CREAR PERMISO -->
+<div class="modal fade" id="crearPermiso" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearPermisoLabel">Crear Permiso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/permisos/crear" method="POST" id="formCrearPermiso">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsPermiso" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresPermiso"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="ruta" class="col-sm-2 col-form-label">Ruta*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="ruta" name="ruta" placeholder="/A/B/:id" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Metodo*</label>
+                        <div class="col-sm-10">
+                            <select name="metodo" id="metodo" class="form-control">
+                                <option value="*">*</option>
+                                <option value="POST">POST</option>
+                                <option value="GET">GET</option>
+                                <option value="UPDATE">UPDATE</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR PERMISOS -->
+<div class="modal fade" id="editarPermiso" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarPermisoLabel">Editar Permiso</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/permisos/actualizar" method="POST" id="formEditarPermiso">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsPermisoEditar" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresPermisoEditar"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombreEditar" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreEditar" name="nombreEditar" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="rutaEditar" class="col-sm-2 col-form-label">Ruta*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="rutaEditar" name="rutaEditar" placeholder="/A/B/:id" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="metodoEditar" class="col-sm-2 col-form-label">Metodo*</label>
+                        <div class="col-sm-10">
+                            <select name="metodoEditar" id="metodoEditar" class="form-control">
+                                <option value="*">*</option>
+                                <option value="POST">POST</option>
+                                <option value="GET">GET</option>
+                                <option value="UPDATE">UPDATE</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" class="form-control d-none" id="idPermiso" name="idPermiso" placeholder="" required>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!--<script src="/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+<script src="/plugins/jszip/jszip.min.js"></script>
+<script src="/plugins/pdfmake/pdfmake.min.js"></script>
+<script src="/plugins/pdfmake/vfs_fonts.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>-->
+<script>
+    $(document).ready(function () {
+        var t = $('#permisos').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+                //t.buttons().container().appendTo('#inventario_wrapper .col-md-6:eq(0)');   
+    });
+  function obtenerDato(id){
+    $.get(
+        '/admin/permisos/obtener',
+        {id:id},
+        function (respuesta) {
+            $('#editarPermiso').modal('show');
+            document.getElementById('nombreEditar').value=respuesta.data.nombre;
+            document.getElementById('idPermiso').value=respuesta.data.id;
+            document.getElementById('rutaEditar').value=respuesta.data.ruta;
+            document.getElementById('metodoEditar').value=respuesta.data.metodo;
+        }
+    ).fail(function(res){
+        descErrores=descErrores+"No se ha encontrado el permiso";
+        document.getElementById('mostrarErrores').innerHTML=descErrores;
+        $('#errors').show();
+        return false;
+    });
+  }
+</script>

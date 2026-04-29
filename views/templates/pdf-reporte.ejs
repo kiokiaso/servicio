@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { margin: 0.5cm; } /* Margen reducido al mínimo */
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #333; line-height: 1.2; }
+        .brand-color { color: #0067c6; }
+        .brand-bg { background-color: #0067c6; color: white; padding: 3px 10px; font-weight: bold; border-radius: 3px; margin-top: 8px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+        th, td { border: 1px solid #eee; padding: 4px; vertical-align: top; }
+        
+        .header-table { border: none; margin-bottom: 10px; }
+        .header-table td { border: none; padding: 0; }
+        
+        /* Contadores más pequeños */
+        .contadores-table { font-size: 8.5px; background: #fdfdfd; }
+        .contadores-table td { padding: 2px 5px; }
+
+        /* Materiales con más espacio */
+        .materiales-table th { background: #f8f9fa; font-size: 9px; text-align: left; }
+        
+        .totals-table { width: 200px; margin-left: auto; margin-top: 5px; }
+        .totals-table td { padding: 3px; font-size: 10px; }
+
+        .firma-img { max-height: 60px; max-width: 180px; display: block; margin: 0 auto; }
+        .signature-box { border-bottom: 1px solid #333; width: 200px; margin: 0 auto; height: 65px; }
+    </style>
+</head>
+<body>
+    <table class="header-table">
+        <tr>
+            <td width="30%"><img src="https://grupoexi.com/wp-content/uploads/2025/08/LOGO-EXI-PNG_3.png" style="width: 120px;"></td>
+            <td width="70%" align="right">
+                <h2 class="brand-color" style="margin:0; font-size: 18px;">REPORTE DE SERVICIO</h2>
+                <strong>Aviso:</strong> <%= intervencion.aviso.id %> |<strong>Folio:</strong> <%= intervencion.aviso.folio %> | <strong>Intervención:</strong> <%= intervencion.id %>
+            </td>
+        </tr>
+    </table>
+
+    <table style="border: 1px solid #0067c6;">
+        <tr>
+            <td width="50%">
+                <strong class="brand-color">CLIENTE:</strong> <%= intervencion.cliente.razonsocial %><br>
+                <%= intervencion.ubicacion.nombre %> | <small><%= intervencion.ubicacion.direccion %></small>
+            </td>
+            <td width="50%">
+                <strong class="brand-color">DETALLES:</strong> <%= intervencion.aviso.tipoAviso.nombre %><br>
+                <strong>Atención:</strong> <%= moment(intervencion.fechaInicio).format('DD/MM/YY HH:mm') %> a <%= moment(intervencion.fechaCierre).format('HH:mm') %><br>
+                <strong>Respuesta:</strong> <%= tRespuesta %> | <strong>Solución:</strong> <%= tSolucion %>
+            </td>
+        </tr>
+    </table>
+
+    <div class="brand-bg">PROBLEMA REPORTADO</div>
+    <div style="padding: 5px; border: 1px solid #eee; min-height: 20px;"><%= intervencion.aviso.observaciones %></div>
+
+    <div class="brand-bg">DETALLE DE EQUIPOS</div>
+    <% intervencion.equipos.forEach(eq => { %>
+        <div style="border: 1px solid #ddd; margin-top: 5px; padding: 5px; border-radius: 4px;">
+            <strong>Serie: <%= eq.equipo.numeroserie %></strong> (<%= eq.equipo.marca %> <%= eq.equipo.modelo %>) — <em><%= eq.equipo.descripcion %></em>
+            - <strong>Tipo de Problema: </strong><%=eq.tipoProblema.nombre%>
+            <table style="margin-top: 5px; border: none;">
+                <tr>
+                    <!-- Contadores compactos -->
+                    <%if(intervencion.aviso.tipoAviso.id==3){%>
+                        <td width="100%" style="border:none; padding-right: 10px;">
+                            <table class="contadores-table">
+                                <tr>
+                                    <th>Contador</th>
+                                    <th>Lectura actual</th>
+                                    <th>Lectura anterior</th>
+                                    <th>Bonificación</th>
+                                    <th>Procesado</th>
+                                </tr>
+                                <% eq.contadores.forEach(c => { %>
+                                    <tr>
+                                        <td><%= c.nombreContador %></td>
+                                        <td align="center"><strong><%= c.valor %></strong></td>
+                                        <td align="center"><%=c.valorAnterior%></td>
+                                        <td align="center"><%=c.bonificacion%></td>
+                                        <td align="center"><%=c.procesado%></td>
+                                    </tr>
+                                <%}) %>
+                            </table>
+                        </td>
+                        <%}else{%>
+                    <td width="25%" style="border:none; padding-right: 10px;">
+                        <table class="contadores-table">
+                            <% eq.contadores.forEach(c => { if(eq.tipoAviso.id==1||eq.tipoAviso.id==2){%>
+                                <tr><td><%= c.nombreContador %> <%=c.tipo%></td><td align="right"><strong><%= c.valor %></strong></td></tr>
+                            <% }else{ %>
+                                <tr><td><%= c.nombreContador %></td><td align="right"><strong><%= c.valor %></strong></td></tr>
+                            <%}}) %>
+                        </table>
+                    </td>
+                    <!-- Tabla de Materiales Protagónica -->
+                    <td width="75%" style="border:none;">
+                        <% if(eq.articulos && eq.articulos.length > 0) { %>
+                        <table class="materiales-table">
+                            <thead>
+                                <tr>
+                                    <th>Código | Descripción | Marca | Modelo <% if(eq.tipoAviso.id==4){%>| Contador<%}%></th>
+                                    <th width="40">Cant.</th>
+                                    <th width="70" align="right">Precio</th>
+                                    <th width="70" align="right">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% eq.articulos.forEach(m => { %>
+                                    <tr>
+                                        <td><strong><%= m.detalleArticulo.codigo %> </strong>|<%= m.detalleArticulo.descripcion %> | <%= m.detalleArticulo.marca %> | <%= m.detalleArticulo.modelo %> <% if(eq.tipoAviso.id==4){%>| <%=m.contador%><%}%></td>
+                                        <td align="center"><%= m.cantidad %></td>
+                                        <td align="right"><%= money(m.costopublico) %></td>
+                                        <td align="right"><%= money(m.subtotalLinea) %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                        <% } else { %> <small class="text-muted">Sin materiales registrados en este equipo.</small> <% } %>
+                    </td>
+                    <%}%>
+                </tr>
+                <tr><td colspan="2">
+<% if (intervencion.aviso.tipoAviso.id == 1 && eq.plantilla && eq.plantilla.campos) { %>
+    <div style="margin-top: 1px; margin-bottom: 1px; background-color: #fcfcfc; border: 1px solid #eee; padding: 6px; border-radius: 4px;">
+        <div style="font-size: 9pt; font-weight: bold; color: #333; border-bottom: 1px solid #eee; margin-bottom: 1px; text-transform: uppercase;">
+            <i class="fas fa-check-square"></i> Resultados de <%= eq.plantilla.plantillaNombre %>:
+        </div>
+        
+        <table width="100%" style="border: none; font-size: 10px;">
+            <tr>
+                <% 
+                   // Dividimos los campos en 2 columnas para ahorrar espacio vertical
+                   const campos = eq.plantilla.campos;
+                   const mitad = Math.ceil(campos.length / 2);
+                   const col1 = campos.slice(0, mitad);
+                   const col2 = campos.slice(mitad);
+                   
+                   [col1, col2].forEach(function(columna) { 
+                %>
+                    <td width="50%" style="border: none; vertical-align: top;">
+                        <table width="100%" style="border-collapse: collapse;">
+                            <% columna.forEach(function(c) { %>
+                                <tr>
+                                    <td style="padding: 1px 4px; border-bottom: 0.5px solid #f0f0f0; color: #555;">
+                                        <%= c.nombre %>:
+                                    </td>
+                                    <td width="50" align="right" style="padding: 1px 4px; border-bottom: 0.5px solid #f0f0f0; font-weight: bold;">
+                                        <% if(c.tipo === 'opciones') { %>
+                                            <span style="color: <%= c.valor === 'No' ? '#d9534f' : '#28a745' %>">
+                                                <%= c.valor %>
+                                            </span>
+                                        <% } else { %>
+                                            <%= c.valor %><%= c.valor ? '%' : '' %>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </table>
+                    </td>
+                <% }) %>
+            </tr>
+        </table>
+    </div>
+<% } %></td></tr>
+                <tr>
+                    <td colspan="2"><strong>Observaciones: </strong><%=eq.observaciones%></td>
+                </tr>
+            </table>
+        </div>
+    <% }) %>
+
+    <!-- Tabla de Totales Generales -->
+     <%if(intervencion.aviso.tipoAviso.id!=3){%>
+    <table class="totals-table">
+        <tr><td>Subtotal:</td><td align="right text-right"><%= money(subtotalGeneral) %></td></tr>
+        <tr><td>IVA (16%):</td><td align="right text-right"><%= money(iva) %></td></tr>
+        <tr class="brand-bg" style="font-size: 11px;"><td><strong>TOTAL:</strong></td><td align="right text-right"><strong><%= money(totalFinal) %></strong></td></tr>
+    </table>
+    <%}%>
+
+    <table style="border: none; margin-top: 5px;">
+        <tr>
+            <td width="30%"><strong>Matrícula:</strong> <%= intervencion.matricula || '-' %></td>
+            <td width="35%"><strong>KM Inicial:</strong> <%= intervencion.kmInicial || '-' %></td>
+            <td width="35%"><strong>KM Final:</strong> <%= intervencion.kmFinal || '-' %></td>
+        </tr>
+        <tr><td colspan="3"><strong>Observaciones de Cierre:</strong> <%= intervencion.observaciones %></td></tr>
+    </table>
+
+    <table style="border: none; margin-top: 10px;">
+        <tr>
+            <td width="50%" align="center" style="border: none;">
+                <div class="signature-box">
+                    <% if (firma) { %><img src="<%= firma %>" class="firma-img"><% } %>
+                </div>
+                <p style="margin-top: 5px;"><strong><%= intervencion.contacto ? intervencion.contacto.nombre : 'Ausente' %></strong><br><%=intervencion.contacto?intervencion.contacto.tipocontacto?intervencion.contacto.tipocontacto.nombre:'':''%><br>Conformidad Cliente</p>
+            </td>
+            <td width="50%" align="center" style="border: none; vertical-align: bottom;">
+                <p><strong>Atendió:</strong> <%= intervencion.atendidoPor.nombre %></p>
+                <div style="font-size: 8px; color: #999;">Generado el <%= moment().format('DD/MM/YYYY HH:mm') %></div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,0 +1,673 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+  <link rel="stylesheet" href="/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+<style>
+    #datSeries {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datSeries .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+    #datClientes {
+        box-shadow: 2px 2px 8px 0 rgba(0,0,0,.2);
+        height: auto;
+        /*position: absolute;*/
+        top: 45px;
+        z-index: 9999;
+        width: 206px;
+        text-align: center;
+        background-color: #e8e8e8;
+    }
+    #datClientes .suggest-element {
+        background-color: #0067c6;
+        border-top: 1px solid #d6d4d4;
+        cursor: pointer;
+        padding: 8px;
+        width: 100%;
+        float: left;
+        color:#FFF;
+        border-radius: 0px 0px 5px 5px;
+
+    }
+    /* Estilos para un look profesional */
+    body { background-color: #f4f7f6; font-family: 'Segoe UI', Roboto, sans-serif; }
+    .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .card-title { font-size: 1.1rem; font-weight: 700; color: #2c3e50; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; }
+    .form-label { font-weight: 600; font-size: 0.85rem; color: #495057; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-control-custom { border-radius: 8px; border: 1px solid #ced4da; padding: 0.6rem 0.75rem; transition: all 0.2s; }
+    .form-control-custom:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,.15); }
+    .table-custom thead { background-color: #f8f9fa; font-size: 0.8rem; }
+    .btn-rounded { border-radius: 50px; padding: 10px 25px; font-weight: 600; }
+    .status-select { font-size: 0.85rem; padding: 2px 5px; height: auto !important; }
+</style>
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Crear avisos</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item active">Crear Aviso</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <form id="formAviso">
+        <div class="row">
+            
+            <!-- SECCIÓN IZQUIERDA: IDENTIFICACIÓN -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4 col-12"><i class="fas fa-search mr-2 text-primary"></i>Identificación</h5>
+                        
+                        <!-- Búsqueda por Serie -->
+                        <div class="form-group ">
+                            <label class="form-label">Número de Serie</label>
+                                <input type="text" class="form-control " id="serie" name="serie" placeholder="Escriba la serie" onkeyup="buscarPorSerie()" autocomplete="off">
+                                <input type="text" id="idSerie" name="idSerie" class="d-none" onchange="buscarEquipo()">
+                                
+                                <div id="datSeries" style="display: none;" >
+
+                                </div>
+                        </div>
+
+                        <!-- Cliente -->
+                        <div class="form-group">
+                            <label class="form-label">Cliente</label>
+                            <input type="text" class="form-control " id="cliente" name="cliente" placeholder="Escriba el nombre del cliente" onkeyup="buscarPorCliente()" autocomplete="off">
+                            <input type="text" id="idCliente" name="idCliente" class="d-none" onchange="buscarUbicaciones()">
+                            <input type="text" id="cambioClientes" onchange="cambio()" class="d-none">
+                            <div id="datClientes" style="display: none;">
+
+                            </div>
+                        </div>
+
+                        <!-- Ubicación -->
+                        <div class="form-group">
+                            <label class="form-label">Ubicación</label>
+                            <select class="form-control " id="ubicaciones" name="ubicaciones" onchange="cargarContextoUbicacion(this.value)" >
+                                <option value="">Primero seleccione cliente</option>
+                            </select>
+                            <input type="text" name="idUbicacion" id="idUbicacion" class="d-none" onchange="buscarContactos()">
+                        </div>
+
+                        <!-- Contacto -->
+                        <div class="form-group">
+                            <label class="form-label">Contacto</label>
+                            <select class="form-control " id="contactos" name="contactos" >
+                                <option value="0">Sin contactos registrados</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4 col-12"><i class="fas fa-cog mr-2 text-secondary"></i>Configuración del Aviso</h5>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Tipo de Aviso</label>
+                            <select class="form-control" id="tipoAviso" name="tipoAviso" onchange="actualizarTiposProblema(this.value)">
+                                <option value="0">Seleccione tipo...</option>
+                                <% tipoAvisos.forEach(t => { %>
+                                    <option value="<%= t.id %>"><%= t.nombre %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Prioridad General</label>
+                            <select class="form-control " id="prioridadAviso" name="prioridadAviso" onchange="heredarPrioridad(this.value)">
+                                <% prioridad.forEach(p => { %>
+                                    <option value="<%= p.id %>"><%= p.nombre %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN DERECHA: DETALLES Y EQUIPOS -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4"><i class="fas fa-edit mr-2 text-info"></i>Descripción del Problema</h5>
+                        <div class="form-group">
+                            <textarea class="form-control form-control-custom" id="observaciones" name="observaciones" rows="4" placeholder="Describa de forma detallada el motivo del aviso..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="m-0 font-weight-bold text-dark">Equipos Involucrados</h5>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="modalAgregarEquipo()"><i class="fas fa-plus mr-1"></i> Agregar Equipo</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-custom mb-0" id="tablaEquipos">
+                                <thead>
+                                    <tr>
+                                        <th style="display: none;"></th>
+                                        <th>Serie / Modelo</th>
+                                        <th style="width: 140px;">Prioridad</th>
+                                        <th>Tipo Problema</th>
+                                        <th>Problema Presentado</th>
+                                        <th style="width: 160px;">Estado</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-right">
+                    <button type="button" class="btn btn-primary btn-rounded shadow" onclick="crearAviso()">Crear Aviso</button>
+                </div>
+            </div>
+            
+        </div>
+    </form>
+    </section>
+</div>
+
+<!-- MODAL AGREGAR EQUIPOS -->
+<div class="modal fade" id="agregarEquipo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">Agregar Equipos</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table w-100"  id="tablaAgregarEquipos">
+                            <thead>
+                                <tr>
+                                    <th> <input type="checkbox" id="checkAll"></th>
+                                    <th style="display:none">ID</th>
+                                    <th>Número de serie</th>
+                                    <th>Descripción</th>
+                                    <th>Sitio</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary" onclick="agregarEquipoAviso()">Agregar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="/plugins/sweetalert2/sweetalert2.min.js"></script>
+<script>
+    function modalAgregarEquipo(){
+        $('#agregarEquipo').modal('show');
+    }
+    function crearAviso(){
+        let error=``;
+        let e=0;
+        let cliente=document.getElementById('idCliente').value
+        let ubicacion=document.getElementById('idUbicacion').value
+        let contacto=document.getElementById('contactos').value
+        let tipoAviso=document.getElementById('tipoAviso').value
+        let prioridad=document.getElementById('prioridadAviso').value
+        let observaciones=document.getElementById('observaciones').value
+        if(document.getElementById('idCliente').value==""){
+            e=1;
+            error+='Debes elegir un cliente<br>'
+        }
+        if(document.getElementById('idUbicacion').value==""){
+            e=1;
+            error+='Debes elegir una ubicación<br>'
+        }
+        if(document.getElementById('contactos').value==0){
+            e=1;
+            error+='Debes elegir un contacto<br>'
+        }
+        if(document.getElementById('tipoAviso').value==0){
+            e=1;
+            error+='Debes elegir un tipo de aviso<br>'
+        }
+        let datos=[]
+        $('.check-equipo:checked').each(function() {
+            let fila = $(this).closest('tr');
+            datos.push({ 
+                id: fila.data('id'),
+                prioridad: fila.find('.select-prioridad').val(),
+                tipoProblema: fila.find('.select-problema-tipo').val(),
+                descripcion: fila.find('.desc-problema').val(),
+                estado: fila.find('.select-estado').val()
+            });
+        });
+        if(datos.length===0){
+            e=1
+            error+='Debes agregar equipos al aviso'
+        }
+        if(e==1){
+            return Swal.fire({
+                icon: 'error',
+                title: '¡Oops!',
+                html: `Hay errores en el formulario, por favor revísalos.<br>${error}`,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#d33' // Color rojo
+            });
+            
+        }
+        console.log(datos)
+        $.post(
+            '/avisos/crear',
+            { cliente,ubicacion,contacto,prioridad,tipoAviso,observaciones,datos },
+            function (res) {
+                if(res.resp==1){
+                    return Swal.fire({
+                        icon: 'success',
+                        title: '¡Creado!',
+                        html: `Se ha creado el aviso de forma correcta`,
+                        timer:1000,
+                        showConfirmButton:false
+                    }).then(()=>{
+                        location.reload();
+                    });
+                }
+                document.getElementById("ubicaciones").innerHTML=contenido;
+                
+        }).fail(function (res) {
+            
+        });
+    }
+    document.getElementById('checkAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.check-item');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+    $(document).on('click', '.btnEliminarEquipo', function() {
+        const id = this.dataset.id;
+        const fila = this.closest('tr');
+        fila.remove();
+        document.getElementById(`equipo${id}`).style.display = 'table-row';
+        document.getElementById(`checkbox${id}`).innerHTML = `<input type="checkbox" class="check-item" value="${id}">`;
+    });
+    function agregarEquipoAviso(){
+        let datos=[]
+        let tipo=document.getElementById('tipoAviso').value;
+        let pri=document.getElementById('prioridadAviso').value;
+        $('.check-item:checked').each(function() {
+            let fila = $(this).closest('tr');
+            datos.push({ id: fila.data('id')});
+        });
+        if (datos.length === 0) {
+            return $(document).Toasts('create', {
+                    class: 'bg-danger',
+                    title: 'ERROR',
+                    subtitle: 'Aviso',
+                    body: 'Debes seleccionar por lo menos un equipo'
+                });
+        }
+        console.log("equipos",datos)
+        $.get(
+            '/avisos/equipos/form-agregar',
+            {datos:datos,tipo},
+            function (respuesta) {
+                const tabla = document.getElementById('tablaEquipos');
+                // Selecciona el tbody si existe, de lo contrario la tabla completa
+                const cuerpoTabla = tabla.querySelector('tbody') || tabla;
+                let contenido=``;
+                respuesta.equipo.forEach(e => {
+                    contenido+=`<tr data-id="${e.id}">
+                        <td style="display:none"><input type="checkbox" class="check-equipo" checked value="${e.id}"></td>
+                        <td class="small"><b>${e.numeroserie}</b><br><span class="text-muted">${e.marca}-${e.modelo}</span></td>
+                        <td>                   
+                            <select class="form-control status-select select-prioridad">`;
+                        
+                            respuesta.prioridad.forEach(p => { 
+                    contenido+=`
+                                <option value="${p.id}" ${p.id==pri?'selected':''}>${p.nombre}</option>`;
+                            }) 
+                    contenido+=`   </select>
+                        </td>
+                        <td>
+                            <select class="form-control status-select select-problema-tipo">
+                                `;
+                            respuesta.tipoProblemas.forEach(ta => { 
+                    contenido+=`
+                                <option value="${ta.id}" ${ta.id==tipo?'selected':''}>${ta.nombre}</option>`;
+                            }) 
+                    contenido+=`</select>
+                        </td>
+                        <td><textarea  class="form-control desc-problema" rows="3"  placeholder="Breve descripción"></textarea></td>
+                        <td>
+                            <select class="form-control status-select select-estado">
+                                <option class="text-success">Operativo</option>
+                                <option class="text-warning">Operativo con Fallas</option>
+                                <option class="text-danger">No Operativo</option>
+                            </select>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-danger border-0 rounded-circle btnEliminarEquipo" 
+                                                    data-id="${e.id}" title="Quitar equipo" style="width: 32px; height: 32px; padding: 0;">
+                                                <i class="fas fa-trash"></i>
+                                            </button></td>
+                    </tr>`;
+                    document.getElementById(`equipo${e.id}`).style.display = 'none';
+                    document.getElementById(`checkbox${e.id}`).innerHTML = '';
+                    document.getElementById('checkAll').checked = false;
+                });
+                
+                cuerpoTabla.insertAdjacentHTML('beforeend', contenido);
+                $('#agregarEquipo').modal('hide');
+                console.log("datos regresados",respuesta.equipo)
+            }
+        ).fail(function(res){
+            descErrores=descErrores+"No se ha encontrado el puesto";
+            document.getElementById('mostrarErroresAutoEditar').innerHTML=descErrores;
+            $('#errorsAutoEditar').show();
+            return false;
+        });
+    }
+    function buscarUbicaciones(){
+        let idU=document.getElementById('idUbicacion').value;
+        console.log("idUbicacion",idU)
+        $.get(
+            '/avisos/ubicaciones/buscar',
+            { id: document.getElementById('idCliente').value },
+            function (res) {
+                let contenido="<option value='0'>Elige una ubicación</option>"
+                res.ubicaciones.forEach(s => {
+                    console.log("idU",idU,"id",s.id)
+                    if(s.id==idU){
+                         contenido = contenido + `<option value="${s.id}" selected>${s.nombre}</option>`;
+                    }else{
+                         contenido = contenido + `<option value="${s.id}">${s.nombre}</option>`;
+                    }
+                    
+                });
+                document.getElementById("ubicaciones").innerHTML=contenido;
+                
+        }).fail(function (res) {
+            
+        });
+    }
+    function cargarContextoUbicacion(id){
+        document.getElementById('idUbicacion').value=id;
+        $('#idUbicacion').trigger('change'); 
+    }
+    function cambio(){
+        const tabla = document.getElementById('tablaEquipos');
+                // Selecciona el tbody si existe, de lo contrario la tabla completa
+                const cuerpoTabla = tabla.querySelector('tbody') || tabla;
+                cuerpoTabla.innerHTML = ''; 
+    }
+    function heredarPrioridad(id){
+        const selectoresEnTabla = document.querySelectorAll('.select-prioridad');
+        selectoresEnTabla.forEach(selector => {
+            selector.value = id;
+        });
+    }
+    function actualizarTiposProblema(id){
+        $.get(
+            '/avisos/tipoproblema/buscar',
+            { id: id},
+            function (res) {
+                const selectoresEnTabla = document.querySelectorAll('.select-problema-tipo');
+                option=``;
+                        res.tipoProblemas.forEach(ta => { 
+                            option+=`<option value="${ta.id}" >${ta.nombre}</option>`;
+                         }) 
+                //selectoresEnTabla.innerHTML=option;
+                selectoresEnTabla.forEach(selector => {
+                    selector.innerHTML = option;
+                });
+        }).fail(function (res) {
+            
+        });
+    }
+    function buscarContactos(){
+        idU=document.getElementById('idUbicacion').value;
+        idS=document.getElementById('idSerie').value;
+        $.get(
+            '/avisos/contactos/buscar',
+            { id: idU},
+            function (res) {
+                let contenido="<option value='0'>Elige un contacto</option>"
+                res.contactos.forEach(s => {
+                    contenido = contenido + `<option value="${s.id}" selected>${s.nombre}</option>`;
+                });
+                document.getElementById("contactos").innerHTML=contenido;
+                $('#idSerie').val("");
+                $('#serie').val("");
+                $('#cambioClientes').trigger('change'); 
+                const tabla = document.getElementById('tablaAgregarEquipos');
+                // Selecciona el tbody si existe, de lo contrario la tabla completa
+                const cuerpoTabla = tabla.querySelector('tbody') || tabla;
+                cuerpoTabla.innerHTML = ''; 
+                let datosTabla=``;
+                res.equipos.forEach(e=>{
+                    
+                    if(idS==e.id){
+                        datosTabla+=`<tr id="equipo${e.id}" data-id="${e.id}" style="display:none">
+                        <td id="checkbox${e.id}">
+                            
+                        </td>`;
+                    }else{
+                        datosTabla+=`<tr id="equipo${e.id}" data-id="${e.id}" style="display:table-row">
+                            <td id="checkbox${e.id}">
+                                <input type="checkbox" class="check-item" value="${e.id}">
+                            </td>`;
+                    }
+                    datosTabla+=`
+                        <td class="small"><b>${e.numeroserie}</b></td>
+                        <td> ${e.descripcion}</td>
+                        <td>${e.sitio} </td>
+                        <td>${e.marca}</td>
+                        <td>${e.modelo}</td>
+                    </tr>`;
+                })
+                
+                cuerpoTabla.insertAdjacentHTML('beforeend', datosTabla);
+                
+        }).fail(function (res) {
+            
+        });
+    }
+    function buscarEquipo(){
+        idU=document.getElementById('idSerie').value;
+        let pri=document.getElementById('prioridadAviso').value;
+        let tipo=document.getElementById('tipoAviso').value;
+        $.get(
+            '/avisos/equipos/obtener',
+            { id: idU,tipo},
+            function (res) {
+                
+                const tabla = document.getElementById('tablaEquipos');
+                // Selecciona el tbody si existe, de lo contrario la tabla completa
+                const cuerpoTabla = tabla.querySelector('tbody') || tabla;
+                cuerpoTabla.innerHTML = ''; 
+                let tr=`<tr data-id="${res.equipo.id}">
+                    <td style="display:none"><input type="checkbox" class="check-equipo" checked value="${res.equipo.id}"></td>
+                    <td class="small"><b>${res.equipo.numeroserie}</b><br><span class="text-muted">${res.equipo.marca}-${res.equipo.modelo}</span></td>
+                    <td>                   
+                        <select class="form-control status-select select-prioridad">`;
+                       
+                        res.prioridad.forEach(p => { 
+                tr+=`
+                            <option value="${p.id}" ${p.id==pri?'selected':''}>${p.nombre}</option>`;
+                         }) 
+                tr+=`   </select>
+                    </td>
+                    <td>
+                        <select class="form-control status-select select-problema-tipo">
+                            `;
+                        res.tipoProblemas.forEach(ta => { 
+                tr+=`
+                            <option value="${ta.id}" ${ta.id==tipo?'selected':''}>${ta.nombre}</option>`;
+                         }) 
+                tr+=`</select>
+                    </td>
+                    <td><textarea  class="form-control desc-problema" rows="3"  placeholder="Breve descripción"></textarea></td>
+                    <td>
+                        <select class="form-control status-select select-estado">
+                            <option class="text-success">Operativo</option>
+                            <option class="text-warning">Operativo con Fallas</option>
+                            <option class="text-danger">No Operativo</option>
+                        </select>
+                    </td>
+                    <td class="text-center"><button class="btn btn-sm btn-outline-danger border-0 rounded-circle btnEliminarEquipo" 
+                                                    data-id="${res.equipo.id}" title="Quitar equipo" style="width: 32px; height: 32px; padding: 0;">
+                                                <i class="fas fa-trash"></i>
+                                            </button></td>
+                </tr>`;
+                cuerpoTabla.insertAdjacentHTML('beforeend', tr);
+                
+        }).fail(function (res) {
+            
+        });
+        
+    }
+    function buscarPorCliente(){
+        var numero = document.getElementById("cliente").value;
+        var contenido="<div><strong>Clic al cliente para elegirlo</strong></div>";
+        if(numero.length>2){
+            $.get(
+                '/avisos/clientes/buscar',
+                { cliente: numero },
+                function (res) {
+                    res.clientes.forEach(s => {
+                        contenido = contenido + `<div style="cursor:pointer"><a class="suggest-element" data="${s.id}" id="${s.id}" cliente="${s.razonsocial}"  >${s.razonsocial}</a></div>`;
+
+                    });
+                    $('#datClientes').fadeIn(1000).html(contenido);
+                    $('.suggest-element').on('click', function () {
+                                //Obtenemos la id unica de la sugerencia pulsada
+                        var id = $(this).attr('id');
+                        var cliente = $(this).attr('cliente');
+                                    //Hacemos desaparecer el resto de sugerencias
+                        document.getElementById('datClientes').innerHTML = "";
+                        document.getElementById('datClientes').style = 'display:none';
+                                    //alert('Has seleccionado el '+id+' '+$('#'+id).attr('data'));
+                        $('#idSerie').val("");
+                        $('#idCliente').val(id);
+                        $('#serie').val("");
+                        $('#cliente').val(cliente);
+                        $('#idCliente').trigger('change');
+                        $('#cambioClientes').trigger('change'); 
+                    });
+            }).fail(function (res) {
+                document.getElementById('datClientes').innerHTML = "";
+                document.getElementById('datClientes').style = 'display:none';
+                $('#idClientes').val("");
+            });
+        }
+        else{
+            
+            document.getElementById('datSeries').innerHTML = "";
+            document.getElementById('datSeries').style = 'display:none';
+            $('#serieId').val("");
+        }
+    }
+    function buscarPorSerie(){
+        var numero = document.getElementById("serie").value;
+        var contenido="<div><strong>Clic a la serie para elegirla</strong></div>";
+        if(numero.length>2){
+            $.get(
+                '/avisos/equipos/buscar',
+                { serie: numero },
+                function (res) {
+                    res.equipos.forEach(s => {
+                        contenido = contenido + `<div style="cursor:pointer"><a class="suggest-element" data="${s.id}" serie="${s.numeroserie}"  id="${s.id}" marca="${s.marca}" modelo="${s.modelo}" cliente="${s.cliente.id}" clienteNombre="${s.cliente.razonsocial}" ubicacion="${s.ubicacion.id}" >${s.numeroserie}</a></div>`;
+
+                    });
+                    $('#datSeries').fadeIn(1000).html(contenido);
+                    $('.suggest-element').on('click', function () {
+                                //Obtenemos la id unica de la sugerencia pulsada
+                        var id = $(this).attr('id');
+                        var marca = $(this).attr('marca');
+                        var modelo = $(this).attr('modelo');
+                        var cliente = $(this).attr('cliente');
+                        var ubicacion = $(this).attr('ubicacion');
+                        var serie = $(this).attr('serie');
+                        $('#numeroserie').val($('#' + id).attr('data'));
+                                    //Hacemos desaparecer el resto de sugerencias
+                        document.getElementById('datSeries').innerHTML = "";
+                        document.getElementById('datSeries').style = 'display:none';
+                                    //alert('Has seleccionado el '+id+' '+$('#'+id).attr('data'));
+                        $('#idSerie').val(id);
+                        $('#idCliente').val(cliente);
+                        $('#idUbicacion').val(ubicacion);
+                        $('#serie').val(serie);
+                        $('#cliente').val($(this).attr('clienteNombre'));
+                        $('#idCliente').trigger('change');
+                        $('#idUbicacion').trigger('change'); 
+                        $('#idSerie').trigger('change');
+                    });
+            }).fail(function (res) {
+                document.getElementById('datSeries').innerHTML = "";
+                document.getElementById('datSeries').style = 'display:none';
+                $('#idSerie').val("");
+            });
+        }
+        else{
+            
+            document.getElementById('datSeries').innerHTML = "";
+            document.getElementById('datSeries').style = 'display:none';
+            $('#serieId').val("");
+        }
+    }
+</script>

@@ -1,0 +1,90 @@
+Para asegurar que no excedas tu presupuesto y optimices la experiencia de usuario, aquí tienes la explicación detallada y el código para implementar las tres estrategias.
+1. Cargar el mapa una sola vez (Single Page Logic)
+El concepto: Normalmente, cada vez que cambias de "ingeniero" en una lista, la página se recarga por completo, lo que Google cuenta como una nueva carga de mapa ($). La solución es mantener el mapa estático y solo actualizar sus "capas" (marcadores y rutas) mediante JavaScript.
+Cómo implementarlo:
+En lugar de enlaces normales (<a href="...">), usa botones que disparen una función de actualización.
+javascript
+// Variable global para reutilizar la polilínea y no crear miles
+let activePolyline = null;
+
+async function actualizarVistaIngeniero(ingenieroId) {
+    // 1. Pedimos los puntos a NUESTRO servidor (gratis)
+    const response = await fetch(`/api/puntos-ingeniero/${ingenieroId}`);
+    const nuevosPuntos = await response.json();
+
+    // 2. Limpiamos la ruta anterior si existe para que el mapa no se sature
+    if (activePolyline) {
+        activePolyline.setMap(null);
+    }
+
+    // 3. Llamamos a la función de trazar ruta (que ahora es más barata)
+    trazarRutaConPuntos(nuevosPuntos);
+}
+Usa el código con precaución.
+
+2. Cambiar a Routes API "Basic" (Ahorro del 50%)
+El concepto: La "Routes Advanced" (que usas actualmente) cobra más por darte datos de tráfico en tiempo real. Para revisar rutas de ingenieros, generalmente no necesitas saber el tráfico exacto de hace 5 minutos, sino el camino que siguieron. Al quitar la preferencia de tráfico, entras en la tarifa Basic. 
+Google for Developers
+Google for Developers
+ +1
+Cambios en tu código:
+Debes eliminar routingPreference y ajustar el FieldMask para que Google sepa que quieres la versión económica.
+javascript
+async function trazarRutaConPuntos(puntos) {
+  const url = "https://routes.googleapis.com";
+
+  const body = {
+    origin: { location: { latLng: { latitude: puntos[0].lat, longitude: puntos[0].lng } } },
+    destination: { location: { latLng: { latitude: puntos[puntos.length - 1].lat, longitude: puntos[puntos.length - 1].lng } } },
+    intermediates: puntos.slice(1, -1).map(p => ({ location: { latLng: { latitude: p.lat, longitude: p.lng } } })),
+    travelMode: "DRIVE",
+    // ELIMINAMOS: routingPreference: "TRAFFIC_AWARE" para bajar a tarifa BASIC
+  };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": "TU_API_KEY",
+      // Cambiamos el FieldMask: solo pedimos la línea y distancia básica
+      "X-Goog-FieldMask": "routes.polyline.encodedPolyline,routes.distanceMeters" 
+    },
+    body: JSON.stringify(body)
+  });
+  // ... resto de tu lógica para dibujar la polyline
+}
+Usa el código con precaución.
+
+3. Limitar peticiones (Throttling)
+El concepto: Evita que un usuario haga clic 10 veces seguidas en el botón de "Actualizar" y te genere 10 cobros de API en un segundo. El Throttling asegura que una función solo se ejecute una vez cada X segundos. 
+Medium
+Medium
+ +3
+Implementación sencilla:
+javascript
+let isWaiting = false;
+
+function botonActualizarPresionado(id) {
+    if (isWaiting) {
+        alert("Por favor espera 10 segundos para actualizar de nuevo.");
+        return;
+    }
+
+    // Ejecuta la actualización
+    actualizarVistaIngeniero(id);
+
+    // Bloquea el botón por 10 segundos
+    isWaiting = true;
+    setTimeout(() => {
+        isWaiting = false;
+    }, 10000); 
+}
+Usa el código con precaución.
+
+Resumen de beneficios:
+Carga única: Reduces de ~1,000 cargas de mapa a solo 1 por sesión de usuario.
+Routes Basic: Pagas $5 USD por cada 1,000 rutas en lugar de $10 USD.
+Throttling: Evitas el gasto accidental por clics repetitivos o errores de bucle en el código. 
+Medium
+Medium
+ +1

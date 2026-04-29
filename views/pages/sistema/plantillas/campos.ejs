@@ -1,0 +1,263 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Campos de la plantilla <%=plantillas.nombre%></h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Admin</a></a></li>
+                        <li class="breadcrumb-item"><a href="/admin/maestros/plantillas">plantillas</a></li>
+                        <li class="breadcrumb-item active">Campos</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <% campos.forEach(p=>{ %>
+            <div class="card p-2">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="col-3 float-left"><%=p.nombre%></div>
+                            <div class="col-3 float-left">
+                                <% if(p.tipo=="opciones"){ %>
+                                    <input type="checkbox" name="my-checkbox" checked data-bootstrap-switch data-off-color="danger" data-on-color="success">
+                                <%}else{ %>
+                                    <input type="number" class="form-control" max="<%=p.max%>" min="<%=p.min%>">
+                                <% } %>
+                            </div>
+                            <div class="col-3 float-left text-center">Orden <%=p.orden%></div>
+                            <div class="col-3 float-left">
+                                <a onclick="obtenerDato(<%=p.id%>)" class="btn btn-warning">Modificar</a>
+                                <a class="btn btn-danger" href="/admin/maestros/plantillas/campos/eliminar/<%=p.id%>">Elminar</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+        <!-- /.card -->
+         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#agregarCampo">
+                      Agregar Campo
+                  </button>
+    </section>
+</div>
+
+
+<!-- MODAL CREAR CAMPO -->
+<div class="modal fade" id="agregarCampo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearCampoLabel">Datos del campo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/plantillas/campos/crear" method="POST" id="formCrearCampo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsCampo" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresCampo"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipo" class="col-sm-2 col-form-label">Tipo de campo*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="tipo" id="tipo" onchange="activarTipo()" >
+                                <option value="0">Elige un Tipo</option>
+                                <option value="opciones">Si/No</option>
+                                <option value="valores">Entre dos valores</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row d-none" id="valores">
+                        <div class="form-group row">
+                            <label for="max" class="col-sm-2 col-form-label">Valor Máximo*</label>
+                            <div class="col-sm-10">
+                                <input type="number" class="form-control" id="max" name="max" placeholder="100" >
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="min" class="col-sm-2 col-form-label">Valor Mínimo*</label>
+                            <div class="col-sm-10">
+                                <input type="number" class="form-control" id="min" name="min" placeholder="0" >
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="orden" class="col-sm-2 col-form-label">Orden*</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="orden" name="orden" placeholder="1" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <input type="text" class="form-control d-none" id="plantillas" name="plantillas" placeholder="Nombre" value="<%=plantillas.id%>" required>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL EDITAR ROLES -->
+<div class="modal fade" id="agregarCampoEditar" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearCampoEditarLabel">Editar Datos del campo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/admin/maestros/plantillas/campos/actualizar" method="POST" id="formCrearCampoEditar">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsCampoEditar" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresCampoEditar"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="nombre" class="col-sm-2 col-form-label">Nombre*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="nombreEditar" name="nombreEditar" placeholder="Nombre" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipo" class="col-sm-2 col-form-label">Tipo de campo*</label>
+                        <div class="col-sm-10">
+                            <select class="form-control" name="tipoEditar" id="tipoEditar" onchange="activarTipo()" >
+                                <option value="0">Elige un Tipo</option>
+                                <option value="opciones">Si/No</option>
+                                <option value="valores">Entre dos valores</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row d-none" id="valoresEditar">
+                        <div class="form-group row">
+                            <label for="max" class="col-sm-2 col-form-label">Valor Máximo*</label>
+                            <div class="col-sm-10">
+                                <input type="number" class="form-control" id="maxEditar" name="maxEditar" placeholder="100" >
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="min" class="col-sm-2 col-form-label">Valor Mínimo*</label>
+                            <div class="col-sm-10">
+                                <input type="number" class="form-control" id="minEditar" name="minEditar" placeholder="0" >
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="orden" class="col-sm-2 col-form-label">Orden*</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="ordenEditar" name="ordenEditar" placeholder="1" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <input type="text" class="form-control d-none" id="idCampo" name="idCampo" placeholder=""  required>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!-- Bootstrap Switch -->
+<script src="/plugins/bootstrap-switch/js/bootstrap-switch.min.js"></script>
+
+<script>
+   $(document).ready(function () {
+    $("input[data-bootstrap-switch]").each(function(){
+      $(this).bootstrapSwitch('state', $(this).prop('checked'));
+    })
+        var t = $('#permisos').DataTable({
+            columnDefs: [
+                {
+                    searchable: true,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+                //t.buttons().container().appendTo('#inventario_wrapper .col-md-6:eq(0)');   
+    });
+    function activarTipo(){
+        if(document.getElementById("tipo").value=="valores"){
+            document.getElementById("valores").className="row d-block"
+        }else{
+            document.getElementById("valores").className="row d-none";
+        }
+    }
+    function activarTipoEditar(){
+        if(document.getElementById("tipoEditar").value=="valores"){
+            document.getElementById("valoresEditar").className="row d-block"
+        }else{
+            document.getElementById("valoresEditar").className="row d-none";
+        }
+    }
+  function obtenerDato(id){
+    $.get(
+        '/admin/maestros/plantillas/campos/obtener',
+        {id:id},
+        function (respuesta) {
+            $('#agregarCampoEditar').modal('show');
+            document.getElementById('nombreEditar').value=respuesta.data.nombre;
+            document.getElementById('tipoEditar').value=respuesta.data.tipo;
+            document.getElementById('maxEditar').value=respuesta.data.max;
+            document.getElementById('minEditar').value=respuesta.data.min;
+            document.getElementById('ordenEditar').value=respuesta.data.orden;
+            document.getElementById('idCampo').value=respuesta.data.id;
+            if(respuesta.data.tipo=="valores"){
+                document.getElementById("valoresEditar").className="row d-block";
+            }else{
+                document.getElementById("valoresEditar").className="row d-none";
+            }
+        }
+    ).fail(function(res){
+        descErrores=descErrores+"No se ha encontrado el campo";
+        document.getElementById('mostrarErroresCampoEditar').innerHTML=descErrores;
+        $('#errorsCampoEditar').show();
+        return false;
+    });
+  }
+</script>

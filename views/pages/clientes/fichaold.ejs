@@ -1,0 +1,498 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+<link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+<style type="text/css">
+    body {
+        background: #eef1f5;
+    }
+
+    .card {
+        border-radius: 14px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, .08);
+    }
+
+    .kpi {
+        padding: 20px;
+        text-align: center;
+    }
+
+    .kpi h3 {
+        font-weight: bold;
+    }
+
+    .map {
+        height: 300px;
+        border-radius: 10px;
+    }
+
+    .sla-ok {
+        background: #28a745;
+        color: #fff;
+    }
+
+    .sla-warning {
+        background: #ffc107;
+    }
+
+    .sla-danger {
+        background: #dc3545;
+        color: #fff;
+    }
+
+    @media(max-width:768px) {
+        .kpi {
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>
+                        <%=cliente.razonsocial%>
+                    </h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/clientes">Clientes</a></li>
+                        <li class="breadcrumb-item active">Ficha</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+        <% }) %>
+    <div class="container-fluid mt-3">
+
+        <!-- KPI DASHBOARD -->
+        <div class="row text-center">
+            <div class="col-md-3 col-6">
+                <div class="card kpi">
+                    <h3>
+                        <%= cliente.ubicaciones.length %>
+                    </h3><small>Ubicaciones</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card kpi">
+                    <h3>
+                        <%= cliente.contactos.length %>
+                    </h3><small>Contactos</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card kpi">
+                    <h3>
+                        <!-- equipos.length -->
+                    </h3><small>Equipos</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card kpi <%= cliente.moroso ? 'sla-danger':'sla-ok' %>">
+                    <h3>
+                        <%= cliente.moroso ? 'Moroso' :'OK' %>
+                    </h3>
+                    <small>Estatus SLA</small>
+                </div>
+            </div>
+        </div>
+        <!-- DATOS GENERALES CLIENTE -->
+        <div class="card mt-3">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-building"></i> Datos Generales del Cliente
+        </div>
+        <div class="card-body">
+            <div class="row">
+            <div class="col-md-6">
+                <p><strong>Código:</strong> <%= cliente.codigo %></p>
+                <p><strong>Razón Social:</strong> <%= cliente.razonsocial %></p>
+                <p><strong>RFC:</strong> <%= cliente.rfc %></p>
+                <p><strong>Dirección:</strong> <%= cliente.direccion %></p>
+                <p><strong>Teléfono:</strong> <%= cliente.telefono %></p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Email:</strong> <%= cliente.email %></p>
+                <p><strong>Horario:</strong> <%= cliente.horario %></p>
+                <p><strong>Tipo:</strong> <span class="badge badge-info"><%= cliente.tipo %></span></p>
+                <p>
+                <strong>Estado:</strong>
+                <span class="badge badge-<%= cliente.activo ? 'success':'secondary' %>">
+                    <%= cliente.activo ? 'Activo':'Inactivo' %>
+                </span>
+                </p>
+                <p>
+                <strong>Moroso:</strong>
+                <span class="badge badge-<%= cliente.moroso ? 'danger':'success' %>">
+                    <%= cliente.moroso ? 'Sí':'No' %>
+                </span>
+                </p>
+            </div>
+            </div>
+        </div>
+</div>
+        <!-- MAPA GENERAL + RUTA -->
+        <div class="card mt-3">
+            <div class="card-header"><i class="fas fa-route"></i> Rutas y Ubicaciones</div>
+            <div class="card-body">
+                <div id="mapRuta" class="map"></div>
+            </div>
+        </div>
+
+        <!-- TABS -->
+        <ul class="nav nav-tabs mt-3">
+            <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#ubicaciones">Ubicaciones</a></li>
+            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#contactos">Contactos</a></li>
+            <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#equipos">Equipos</a></li>
+        </ul>
+
+        <div class="tab-content mt-2">
+
+            <!-- UBICACIONES -->
+            <div class="tab-pane fade show active" id="ubicaciones">
+                <div class="card">
+                    <div class="card-body table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Dirección</th>
+                                    <th>SLA</th>
+                                    <th>Mapa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% cliente.ubicaciones.forEach(u=>{ %>
+                                    <tr>
+                                        <td>
+                                            <%= u.nombre %>
+                                        </td>
+                                        <td>
+                                            <%= u.direccion %>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge <%= u.sla=='alto'?'sla-danger':u.sla=='medio'?'sla-warning':'sla-ok' %>">
+                                                <%= u.sla || 'normal' %>
+                                            </span>
+                                        </td>
+                                        <td><button class="btn btn-sm btn-primary"
+                                                onclick="verMapa(<%= u.coordenadas %>)">Ver</button></td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTACTOS -->
+            <div class="tab-pane fade" id="contactos">
+                <div class="card">
+                    <div class="card-body table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Puesto</th>
+                                    <th>Ubicación</th>
+                                    <th>Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% cliente.contactos.forEach(c=>{ %>
+                                    <tr>
+                                        <td>
+                                            <%= c.nombre %>
+                                        </td>
+                                        <td>
+                                            <%= c.puesto %>
+                                        </td>
+                                        <td>
+                                            <%= c.ubicacion %>
+                                        </td>
+                                        <td><span class="badge badge-info">
+                                                <%= c.tipocontacto %>
+                                            </span></td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EQUIPOS -->
+            <div class="tab-pane fade" id="equipos">
+                <div class="card">
+                    <div class="card-body table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Serie</th>
+                                    <th>Descripción</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Sitio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+    
+
+    <!-- MODAL -->
+    <div class="modal fade" id="modalMapa">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Mapa</h5><button class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="mapDetalle" style="height:400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- MODAL EDITAR ARTICULO -->
+<div class="modal fade" id="editarArticulo" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearArticuloLabel">Editar Articulo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/almacen/articulos/actualizar" method="POST"
+                    id="formCrearArticulo">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsArticulo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresArticulo"></div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="codigo" class="col-sm-2 col-form-label">Código*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="codigo" name="codigo"
+                                value="<%=articulo.codigo%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="clavealterna" class="col-sm-2 col-form-label">Clave Alterna*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="clavealterna" name="clavealterna"
+                                value="<%=articulo.clavealterna%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="descripcion" class="col-sm-2 col-form-label">Descripción*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" id="descripcion" name="descripcion"
+                                required> <%=articulo.descripcion%></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="marca" class="col-sm-2 col-form-label">Marca*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="marca" name="marca" value="<%=articulo.marca%>"
+                                required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="modelo" class="col-sm-2 col-form-label">Modelo*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="modelo" name="modelo"
+                                value="<%=articulo.modelo%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="garantia" class="col-sm-2 col-form-label">Garantia(cantidad en meses)*</label>
+                        <div class="col-sm-10">
+                            <input type="number" class="form-control" id="garantia" name="garantia"
+                                value="<%=articulo.garantia%>" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="preciopublico" class="col-sm-2 col-form-label">Precio Público*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="preciopublico"
+                                name="preciopublico" value="<%=articulo.preciopublico%>" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="stockMinimo" class="col-sm-2 col-form-label">Stock Mínimo*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="stockMinimo" name="stockMinimo"
+                                value="<%=articulo.stockMinimo%>" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="rendimiento" class="col-sm-2 col-form-label">Rendimiento*</label>
+                        <div class="col-sm-10">
+                            <input type="number" step="0.01" class="form-control" id="rendimiento" name="rendimiento"
+                                value="<%=articulo.rendimiento%>" placeholder="0" required>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Editar</button>
+                <input type="text" value="<%=articulo.id%>" class="form-control d-none" name="id" id="id">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../partials/scripts/comun')%>
+    <!-- DataTables  & Plugins -->
+    <script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+    <script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+    <script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+    <script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+    <script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+    <!--<script src="/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+<script src="/plugins/jszip/jszip.min.js"></script>
+<script src="/plugins/pdfmake/pdfmake.min.js"></script>
+<script src="/plugins/pdfmake/vfs_fonts.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>-->
+    <script>
+        $(document).ready(function () {
+            document.getElementById('btn-agregar-serie').addEventListener('click', function () {
+                let input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'series[]';
+                input.className = 'form-control';
+                document.getElementById('lista-series').appendChild(input);
+            });
+            var table = $('#articulos').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "ajax": {
+                    "url": "/almacen/articulos/tabla",
+                    "type": "GET"
+                },
+                rowId: 'id',
+                stateSave: true,
+                columns: [
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            return `<a href="/almacen/articulos/${row.id}">
+                                ${row.codigo}
+                            </a>`;
+                        }
+                    },
+                    { data: 'descripcion' },
+                    { data: 'marca' },
+                    { data: 'modelo' },
+                    { data: 'tipo' },
+                    { data: 'garantia' },
+                    { data: 'preciopublico' },
+                ],
+                columnDefs: [
+                    {
+                        searchable: false,
+                        orderable: false,
+                        targets: 0,
+                    },
+                ],
+                scrollX: true,
+                scrollCollapse: true,
+                fixedColumns: { leftColumns: 2 },
+                order: [[0, 'asc']],
+            });
+        });
+        function cambiarSeries() {
+            if (document.getElementById("tipo").value == "COMPRA") {
+                document.getElementById("comprarSeries").className = "form-group row"
+                document.getElementById("venderSeries").className = "form-group row d-none"
+            } else {
+                document.getElementById("comprarSeries").className = "form-group row d-none"
+                document.getElementById("venderSeries").className = "form-group row "
+            }
+        }
+        function obtenerSeries(id) {
+            $.get(
+                '/almacen/articulos/obtener/series',
+                { id: id },
+                function (respuesta) {
+                    let listaSeries = Array.isArray(respuesta.data) ? respuesta.data : [respuesta.data];
+
+                    $('#verSeries').modal('show');
+                    let tablaHtml = `
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th class="border-0">ID</th>
+                                <th class="border-0">Número de Serie</th>
+                                <th class="border-0 text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                    listaSeries.forEach(item => {
+                        // Formato vistoso para el campo 'usado'
+                        let badgeEstado = item.usado === "INSTALADO"
+                            ? '<span class="badge badge-pill badge-warning"><i class="fas fa-history"></i> Instalado</span>'
+                            : '<span class="badge badge-pill badge-success"><i class="fas fa-check"></i> Disponible</span>';
+
+                        tablaHtml += `
+                            <tr>
+                                <td class="align-middle font-weight-bold text-muted">#${item.id}</td>
+                                <td class="align-middle">
+                                    <span class="text-primary"><i class="fas fa-barcode mr-2"></i>${item.serie}</span>
+                                </td>
+                                <td class="align-middle text-center">
+                                    ${badgeEstado}
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+
+                    tablaHtml += `
+                        </tbody>
+                    </table>
+                `;
+
+                    $('#contenedorSeries').html(tablaHtml);
+                }
+            ).fail(function (res) {
+                descErrores = descErrores + "No se ha encontrado el puesto";
+                document.getElementById('mostrarErroresAutoEditar').innerHTML = descErrores;
+                $('#errorsAutoEditar').show();
+                return false;
+            });
+        }
+    </script>

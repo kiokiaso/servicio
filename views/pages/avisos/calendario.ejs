@@ -1,0 +1,454 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+<link rel="stylesheet" href="/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+<!-- CSS de FullCalendar 5.10.1 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" />
+
+
+
+
+<style>
+    /* Estilos para el calendario */
+    .fc-event { border-radius: 4px !important; border: none !important; cursor: pointer; }
+    .fc-v-event { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    
+    /* Estilo para los finalizados (Opacos) */
+    .fc-event-past, .fc-event-finalizado {
+        opacity: 0.6;
+        cursor: not-allowed !important;
+    }
+    .fc-theme-standard td, .fc-theme-standard th { border-color: #ebebeb; }
+    .fc-col-header-cell { background-color: #f8f9fa; padding: 5px 0 !important; }
+    .fc .fc-timegrid-slot {
+        height: 0.5em !important; /* Ajusta este valor para hacerlo más o menos estrecho */
+    }
+    /* Hace que el texto dentro de los eventos sea más compacto para que quepa en 15 min */
+    .fc-event-main {
+        padding: 1px 2px !important;
+        line-height: 1 !important;
+    }
+    /* Opcional: Oculta filas de "Por asignar" si están vacías para ahorrar espacio */
+    .fc-daygrid-body-unrestricted {
+        max-height: 100px !important;
+    }
+</style>
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header pb-0">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h3 class="font-weight-bold text-dark mb-0">
+                        <i class="fas fa-calendar-check text-primary mr-2"></i>Agenda de Servicios
+                    </h3>
+                    <p class="text-muted small">Gestiona y reprograma los avisos</p>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="/avisos">Aviso</a></li>
+                        <li class="breadcrumb-item active">Calendario</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        
+<div class="container-fluid mt-n2" style="background-color: #f4f7f6; ">
+    <!-- Encabezado y Filtro -->
+    <div class="row align-items-center">
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body py-2">
+                    <label class="small font-weight-bold text-uppercase mb-0 text-muted">Filtrar por Ingeniero:</label>
+                    <select id="filtroIngeniero" class="form-control form-control-sm border-primary">
+                        <option value="todos">-- Ver todos los ingenieros --</option>
+                        <% ingenieros.forEach(ing => { %>
+                            <option value="<%= ing.id %>"><%= ing.nombre %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor del Calendario -->
+    <div class="card shadow-sm border-0" style="border-radius: 15px;">
+        <div class="card-body p-3">
+            <div id="calendar" style="min-height: auto; background-color: #fff;"></div>
+        </div>
+    </div>
+</div>
+
+
+    </section>
+</div>
+
+
+<!-- MODAL MODIFICAR PROGRAMACIÓN -->
+<div class="modal fade" id="programacion" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarEquipoLabel">
+                    <i class="fas fa-calendar-edit mr-2"></i>Aviso #<span id="txtFolioModal"></span>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsEquipo"
+                        style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                        <div id="mostrarErroresEquipo"></div>
+                    </div>
+                    <div class="row">
+                        <div class="mb-4 row col-12">
+                            <h5 class="font-weight-bold text-uppercase text-muted d-block mb-0">Cliente: </h5>
+                            <h5 id="txtClienteModal" class="text-dark font-weight-bold mb-0"></h5>
+                            <hr class="mt-2">
+                        </div>
+                        <!-- Fecha Inicio -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="small font-weight-bold text-uppercase text-muted">Inicio de Atención</label>
+                                <input type="datetime-local" id="manualFechaInicio" name="manualFechaInicio" class="form-control">
+                            </div>
+                        </div>
+                        <!-- Fecha Fin -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="small font-weight-bold text-uppercase text-muted">Fin Estimado</label>
+                                <input type="datetime-local" id="manualFechaFin" name="manualFechaFin" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold ">Ingeniero:</label>
+                        <select id="ingeniero" name="ingeniero" name="ingeniero" class="form-control ">
+                            <option value="0">Elige un ingeniero</option>
+                            <% ingenieros.forEach(ing => { %>
+                                <option value="<%= ing.id %>"><%= ing.nombre %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <input type="text" name="idAviso" id="idAviso">
+                <button type="submit" class="btn btn-primary" onclick="agregarEquipoAviso()">Modificar</button>
+                <input type="text" name="redirect" id="redirect" value="No">
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="/plugins/sweetalert2/sweetalert2.min.js"></script>
+<!-- JS de FullCalendar 5.10.1 -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+
+<!-- Locales para español -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales/es.min.js"></script>
+
+<!-- Moment.js -->
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const avisoId = urlParams.get('editAviso');
+        const target = urlParams.get('redirect');
+
+        if (avisoId) {
+            // 1. Dispara tu función actual que abre el modal
+            // Ajusta 'abrirModalEdicion' al nombre real de tu función
+            $.get(
+                '/avisos/obtener',
+                { id:avisoId },
+                function (res) {
+                    if(res.resp==1){
+                        $('#programacion').modal('show');
+                        document.getElementById('idAviso').value=res.aviso.id
+                        document.getElementById('txtFolioModal').innerHTML=res.aviso.folio
+                        document.getElementById('txtClienteModal').innerHTML=res.aviso.cliente.razonsocial
+                        document.getElementById('ingeniero').value=res.aviso.atendidoPor,
+                        document.getElementById('redirect').value='Si'
+                    }
+                    
+            }).fail(function (res) {
+                
+            });
+            
+        }
+    });
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const filtro = document.getElementById('filtroIngeniero');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        locale: 'es',
+        firstDay: 1, // Lunes
+        height:'auto',
+        contentHeight:400,
+        aspectRatio:1.5,
+        allDaySlot: true,
+        slotMinTime: '08:00:00',
+        slotMaxTime: '19:00:00',
+        slotDuration:'00:15:00',
+        slotLabelInterval:'01:00:00',
+        expandRows:false,
+        editable: true, // Habilitar Drag & Drop
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridWeek,timeGridDay,dayGridMonth'
+        },
+        
+        // Carga de eventos inicial
+        events: '/avisos/eventos-calendario',
+
+        // RESTRICCIÓN: Solo avisos NO finalizados son movibles
+        eventStartEditable: function(event) {
+            return event.extendedProps.estado !== 'finalizado';
+        },
+
+        // AL ARRASTRAR Y SOLTAR
+        eventDrop: async function(info) {
+            const avisoId = info.event.id;
+            const nuevaFecha = info.event.startStr;
+            const ingenieroId = info.event.extendedProps.ingenieroId;
+
+            const esAsignacionNueva = !info.event.allDay;
+
+            // Bloquear interfaz mientras valida
+            Swal.showLoading();
+
+            try {
+                const response = await fetch('/avisos/validar-y-mover', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: avisoId,
+                        fechaAtencion: nuevaFecha,
+                        atendidoPor: ingenieroId,
+                        esAsignacionNueva:esAsignacionNueva
+                    })
+                });
+
+                const res = await response.json();
+
+                if (!response.ok) {
+                    Swal.fire(res.titulo, res.message, 'warning');
+                    info.revert(); // Regresa el evento a su lugar original
+                } else {
+                    // Actualizar la hora de fin recalculada por el servidor
+                    info.event.setEnd(res.nuevaFechaFin);
+                    info.event.setProp('backgroundColor', res.nuevoColor);
+                    info.event.setProp('borderColor', res.nuevoColor);
+                    
+                    // Asegurar que no regrese a "All Day"
+                    info.event.setProp('allDay', false);
+
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                    Toast.fire({ icon: 'success', title: 'Programación actualizada' });
+                }
+            } catch (error) {
+                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                info.revert();
+            }
+        },
+
+        // AL DAR CLIC (Para edición manual)
+        eventClick: function(info) {
+            if (info.event.extendedProps.estado === 'finalizado') {
+                Swal.fire('Aviso Finalizado', 'No se puede editar la programación de un aviso cerrado.', 'info');
+                return;
+            }
+            // Aquí puedes llamar a tu modal de edición si lo deseas
+            $('#programacion').modal('show');
+            document.getElementById('idAviso').value=info.event.id
+            document.getElementById('txtFolioModal').innerHTML=info.event.extendedProps.folio
+            document.getElementById('txtClienteModal').innerHTML=info.event.title
+            document.getElementById('ingeniero').value=info.event.extendedProps.ingenieroId
+            //window.location.href = '/avisos/' + info.event.id;
+        },
+
+        // DISEÑO DEL EVENTO
+        eventContent: function(arg) {
+            let esFinalizado = arg.event.extendedProps.estado === 'finalizado';
+            let esAllDay = arg.event.allDay; // Detectamos si está en la barra superior "Por asignar"
+            //console.log("datos",arg)
+    
+            // Formateamos las horas solo si NO es allDay
+            let htmlHoras = '';
+            if (!esAllDay) {
+                htmlHoras = `<div style="font-size: 0.65rem; opacity: 0.8;">
+                                ${moment(arg.event.start).format('HH:mm')} - ${moment(arg.event.end).format('HH:mm')}
+                            </div>`;
+            }
+
+            return {
+                html: `
+                <div class="p-1" style="line-height: 1.2; overflow: hidden; height: 100%;color:#FFF">
+                    <div style="font-size: 0.75rem; font-weight: bold;">
+                        ${esFinalizado ? '<i class="fas fa-lock small"></i>' : ''} 
+                        #${arg.event.extendedProps.folio}
+                    </div>
+                    <div class="text-truncate" style="font-size: 0.7rem;">${arg.event.title}</div>
+                    <div class="text-truncate" style="font-size: 0.7rem;">${arg.event.extendedProps.ingeniero}</div>
+                    
+                </div>`
+            };
+        }
+    });
+
+    calendar.render();
+
+    // FILTRO DINÁMICO
+    filtro.addEventListener('change', function() {
+        const ingId = this.value;
+        // Limpiamos y recargamos con el parámetro de ingeniero
+        calendar.removeAllEventSources();
+        calendar.addEventSource({
+            url: '/avisos/eventos-calendario',
+            extraParams: { ingenieroId: ingId }
+        });
+    });
+});
+async function agregarEquipoAviso() {
+    const data = {
+        idAviso: $('#idAviso').val(),
+        ingeniero: $('#ingeniero').val(),
+        manualFechaInicio: $('#manualFechaInicio').val(),
+        manualFechaFin: $('#manualFechaFin').val()
+    };
+
+    // Bloquear botón y mostrar loading
+    Swal.showLoading();
+
+    try {
+        const response = await fetch('/avisos/modificar-programacion-manual', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const res = await response.json();
+
+        if (!response.ok) {
+            // Mostrar error en el div del modal
+            $('#mostrarErroresEquipo').html(`<strong>Error:</strong> ${res.message}`);
+            $('#errorsEquipo').fadeIn();
+            Swal.close();
+        } else {
+            $('#programacion').modal('hide');
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Actualizado!',
+                text: res.message,
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                // Opción A: Recargar la página (Más seguro para sincronizar todo)
+                if(document.getElementById('redirect').value=="No"){
+                    location.reload();
+                }else{
+                    window.location.href = '/avisos/' + data.idAviso;
+                }
+                
+            });
+        }
+    } catch (error) {
+        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+    }
+}
+// Referencias a los elementos
+const inputInicio = document.getElementById('manualFechaInicio');
+const inputFin = document.getElementById('manualFechaFin');
+
+// 1. Al cambiar el INICIO
+inputInicio.addEventListener('change', function() {
+    // Validar Domingo
+    const fecha = new Date(this.value);
+    if (fecha.getUTCDay() === 0) {
+        Swal.fire('Día no laboral', 'No se pueden programar avisos los domingos.', 'warning');
+        this.value = '';
+        return;
+    }
+
+    // El Fin no puede ser antes que el Inicio
+    // Ajustamos el "min" del input de fin para que el navegador bloquee fechas anteriores
+    inputFin.setAttribute('min', this.value);
+
+    // Si el valor actual de fin es menor al nuevo inicio, lo igualamos o lo limpiamos
+    if (inputFin.value && inputFin.value < this.value) {
+        inputFin.value = this.value;
+        Toast.fire({ icon: 'info', title: 'Se ajustó el fin al horario de inicio' });
+    }
+});
+
+// 2. Al cambiar el FIN
+inputFin.addEventListener('change', function() {
+    // Validar Domingo
+    const fecha = new Date(this.value);
+    if (fecha.getUTCDay() === 0) {
+        Swal.fire('Día no laboral', 'No se pueden programar avisos los domingos.', 'warning');
+        this.value = '';
+        return;
+    }
+
+    // Validar que no sea menor al inicio manualmente (por si el navegador no soporta 'min')
+    if (inputInicio.value && this.value < inputInicio.value) {
+        Swal.fire('Error de horario', 'La fecha de fin no puede ser anterior al inicio.', 'error');
+        this.value = inputInicio.value;
+    }
+});
+$('#programacion').on('show.bs.modal', function () {
+    const ahora = new Date().toISOString().slice(0, 16);
+    
+    // Evitar programar en el pasado
+    inputInicio.setAttribute('min', ahora);
+    
+    // Si ya hay un valor cargado en inicio, actualizar el min de fin
+    if (inputInicio.value) {
+        inputFin.setAttribute('min', inputInicio.value);
+    } else {
+        inputFin.setAttribute('min', ahora);
+    }
+});
+
+
+
+
+</script>

@@ -1,0 +1,62 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Usuarios sucursales</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item"><a href="#">Admin</a></a></li>
+                        <li class="breadcrumb-item"><a href="/admin/usuarios">Usuarios</a></li>
+                        <li class="breadcrumb-item active">Usuarios sucursales</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <form action="/admin/usuarios/sucursales/guardar" method="post">
+        <section class="content">
+            <div class="card">
+                <div class="card-header">
+                <h3 class="card-title"><%=usuario.nombre%></h3>
+                </div>
+                <!-- /.card-header -->
+                <!-- /.card-header -->
+                <div class="card-body pl-4">
+                    <% oficinas.forEach(p=>{ %>
+                      
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" <%=p.checked%> value="<%=p.id%>" id="<%=p.id%>" name="oficinas">
+                            <label class="form-check-label" for="<%=p.id%>">
+                                <%=p.nombre%>
+                            </label>
+                        </div>
+                    <% }) %>
+                </div>
+                <!-- /.card-body -->
+                <div class="card-footer">
+                    <input type="number" class="d-none" value="<%=usuario.id%>" name="idUsuario" id="idUsuario">
+                    <button type="submit" class="btn btn-primary">
+                        Guardar sucursales
+                    </button>
+                </div>
+            </div>
+            <!-- /.card -->
+        </section>
+    </form>
+</div>
+
+
+<%- partial('../../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->

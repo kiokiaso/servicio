@@ -1,0 +1,228 @@
+<link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css">
+<!-- DataTables -->
+ <link rel="stylesheet" href="/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/js/datatables/fixedColumns.dataTables.min.css">
+
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Clientes</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                        <li class="breadcrumb-item active">Clientes</li>
+                    </ol>
+                </div>
+            </div>
+        </div><!-- /.container-fluid -->
+    </section>
+    <% flash.get('mensaje').forEach(function (msg){ %>
+        <div class="alert alert-info text-center" role="alert">
+            <%=msg%>
+        </div>
+    <% }) %>
+    <section class="content">
+        <div class="card">
+            <div class="card-header">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#crearCliente">
+                      Crear Cliente
+                  </button> 
+                <a href="/clientes/inactivos" class="btn btn-danger">Ver inactivos</a>
+            </div>
+            <!-- /.card-header -->
+            <!-- /.card-header -->
+            <div class="card-body p-2">
+                <table class="display table table-bordered table-striped w-100" id="clientes">
+                  <thead>
+                    <tr>
+                      <th>Código SAE</th>
+                      <th>Razon social</th>
+                      <th>Tipo de cliente</th>
+                      <th>RFC</th>
+                      <th>Email</th>
+                      <th>Teléfono</th>
+                      <th>Dirección</th>
+                      
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% clientes.forEach(c=>{ %>
+                        <tr class="fila-articulo" data-id="<%=c.id%>">
+                            <td><%=c.codigo%></td>
+                            <td><a href="/clientes/<%=c.id%>" class="enlace"><%=c.razonsocial%></a></td>
+                            <td><%
+                                if(c.esPolizaForanea){ %>
+                                    <span class="badge badge-danger">Póliza entre exi</span> <%=c.oficina.nombre%>
+                                <% }else{
+                                    if(c.tipo=="ARRENDAMIENTO"){%>
+                                        <span class="badge badge-primary">ARRENDAMIENTO</span>
+                                    <%}if(c.tipo=="POLIZA"){%>
+                                        <span class="badge badge-success">Póliza de servicio</span>
+                                    <%} if(c.tipo=="TYM"){%>
+                                        <span class="badge badge-secondary">TYM</span>
+                                    <%}%>  
+                                <% }
+                            %></td>
+                            <td><%=c.rfc%></td>
+                            <td><%=c.email%></td>
+                            <td><%=c.telefono%></td>
+                            <td><%=c.direccion%></td>
+                            <td>
+                                <% if(!c.esPolizaForanea){ %>
+                                    <a href="/clientes/desactivar/<%=c.id%>" class="btn btn-danger">Desactivar</a>
+                                <% }%>
+                            </td>
+                        </tr>                        
+                    <% })%>
+                  </tbody>
+                </table>
+              </div>
+              <!-- /.card-body -->
+            </div>
+          <!-- /.card -->
+    </section>
+</div>
+
+
+<!-- MODAL CREAR ARTICULO -->
+<div class="modal fade" id="crearCliente" data-backdrop="static" tabindex="-1" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crearClienteLabel">Crear Cliente</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" action="/clientes/crear" method="POST" id="formCrearCliente">
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorsCliente" style="display: none;">
+                        <button type="button" class="close" data-dismiss="alert"
+                            aria-label="Close"><span>&times;</span></button>
+                            <div id="mostrarErroresCliente"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="codigo" class="col-sm-2 col-form-label">Código SAE*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="codigo" name="codigo"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="razonsocial" class="col-sm-2 col-form-label">Razón social*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="razonsocial" name="razonsocial"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="rfc" class="col-sm-2 col-form-label">RFC*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="rfc" name="rfc"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="email" class="col-sm-2 col-form-label">Email*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="email" name="email"  required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="direccion" class="col-sm-2 col-form-label">Dirección*</label>
+                        <div class="col-sm-10">
+                            <textarea type="text" class="form-control" cols="3" id="direccion" name="direccion"  required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="telefono" class="col-sm-2 col-form-label">Teléfono*</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="telefono" name="telefono">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="tipo" class="col-sm-2 col-form-label">Tipo*</label>
+                        <div class="col-sm-10">
+                            <select name="tipo" id="tipo" class="form-control">
+                                <option value="ARRENDAMIENTO">Arrendamiento</option>
+                                <option value="POLIZA">Póliza de servicio</option>
+                                <option value="TYM">TYM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="ruta" class="col-sm-2 col-form-label">Ruta*</label>
+                        <div class="col-sm-10">
+                            <select name="ruta" id="ruta" class="form-control">
+                                <% rutas.forEach(r=>{ %>
+                                    <option value="<%=r.id%>"><%=r.nombre%></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Crear</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- partial('../../partials/scripts/comun')%>
+<!-- DataTables  & Plugins -->
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+<script src="/js/datatables/dataTables.fixedColumns.min.js"></script>
+<!--<script src="/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+<script src="/plugins/jszip/jszip.min.js"></script>
+<script src="/plugins/pdfmake/pdfmake.min.js"></script>
+<script src="/plugins/pdfmake/vfs_fonts.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+<script src="/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>-->
+<script>
+    $(document).ready(function () {
+        var table = $('#clientes').DataTable({
+            stateSave: true,
+            
+            columnDefs: [
+                {
+                    searchable: false,
+                    orderable: false,
+                    targets: 0,
+                },
+            ],
+            scrollX:true,
+            scrollCollapse:true,
+            fixedColumns:{leftColumns:2},
+            order: [[0, 'asc']],
+        });
+    });
+  function obtenerDato(id){
+    $.get(
+        '/maestros/autos/obtener',
+        {id:id},
+        function (respuesta) {
+            $('#editarAuto').modal('show');
+            document.getElementById('placaEditar').value=respuesta.data.placa;
+            document.getElementById('descripcionEditar').value=respuesta.data.descripcion;
+            document.getElementById('kilometrajeEditar').value=respuesta.data.kilometraje;
+            document.getElementById('idAuto').value=respuesta.data.id;
+        }
+    ).fail(function(res){
+        descErrores=descErrores+"No se ha encontrado el puesto";
+        document.getElementById('mostrarErroresAutoEditar').innerHTML=descErrores;
+        $('#errorsAutoEditar').show();
+        return false;
+    });
+  }
+</script>
