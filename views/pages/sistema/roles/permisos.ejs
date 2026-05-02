@@ -30,36 +30,79 @@
             <%=msg%>
         </div>
     <% }) %>
-    <form action="/admin/roles/permisos/guardar" method="post">
-        <section class="content">
-            <div class="card">
-                <div class="card-header">
-                <h3 class="card-title"><%=role.nombre%></h3>
-                </div>
-                <!-- /.card-header -->
-                <!-- /.card-header -->
-                <div class="card-body pl-4">
-                    <% permisos.forEach(p=>{ %>
-                      
+<form action="/admin/roles/permisos/guardar" method="post">
+<section class="content">
+    <div class="card shadow-sm">
+        
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><%= role.nombre %></h5>
+        </div>
+
+        <div class="card-body">
+
+            <% Object.keys(permisosAgrupados).forEach(tipo => { %>
+
+                <div class="mb-4 border rounded p-3">
+
+                    <!-- Header tipo -->
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 text-uppercase font-weight-bold">
+                            <%= tipo %>
+                        </h6>
+
+                        <!-- Check all -->
                         <div class="form-check">
-                          <input class="form-check-input" type="checkbox" <%=p.checked%> value="<%=p.id%>" id="<%=p.id%>" name="permiso">
-                            <label class="form-check-label" for="<%=p.id%>">
-                                <%=p.nombre%>
+                            <input class="form-check-input check-tipo" 
+                                   type="checkbox" 
+                                   data-tipo="<%= tipo %>" 
+                                   id="check_all_<%= tipo %>">
+
+                            <label class="form-check-label font-weight-bold">
+                                Seleccionar todos
                             </label>
                         </div>
-                    <% }) %>
+                    </div>
+
+                    <div class="row">
+                        <% permisosAgrupados[tipo].forEach(p => { %>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input permiso-item tipo-<%= tipo %>" 
+                                           type="checkbox" 
+                                           <%= p.checked ? 'checked' : '' %>
+                                           value="<%= p.id %>" 
+                                           name="permiso">
+
+                                    <label class="form-check-label d-flex flex-column">
+                                        <span class="fw-bold text-dark">
+                                            <%= p.nombre %>
+                                        </span>
+                                        <span class="text-muted small">
+                                            <i class="fas fa-route me-1"></i> <%= p.ruta %>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+
                 </div>
-                <!-- /.card-body -->
-                <div class="card-footer">
-                    <input type="number" class="d-none" value="<%=role.id%>" name="idRole" id="idRole">
-                    <button type="submit" class="btn btn-primary">
-                        Guardar permisos
-                    </button>
-                </div>
-            </div>
-            <!-- /.card -->
-        </section>
-    </form>
+
+            <% }) %>
+
+        </div>
+
+        <div class="card-footer text-right">
+            <input type="hidden" value="<%= role.id %>" name="idRole">
+            <button type="submit" class="btn btn-success">
+                Guardar permisos
+            </button>
+        </div>
+
+    </div>
+</section>
+</form>
+    
 </div>
 
 
@@ -166,6 +209,26 @@
             fixedColumns:{leftColumns:2},
             order: [[0, 'asc']],
         });
+
+    // Seleccionar todos por tipo
+    $('.check-tipo').on('change', function () {
+        let tipo = $(this).data('tipo');
+        let checked = $(this).is(':checked');
+
+        $('.tipo-' + tipo).prop('checked', checked);
+    });
+
+    // Si desmarcan uno, desmarcar el "select all"
+    $('.permiso-item').on('change', function () {
+        let clases = $(this).attr('class').split(' ');
+        let tipoClase = clases.find(c => c.startsWith('tipo-'));
+
+        let tipo = tipoClase.replace('tipo-', '');
+        let total = $('.' + tipoClase).length;
+        let checked = $('.' + tipoClase + ':checked').length;
+
+        $('#check_all_' + tipo).prop('checked', total === checked);
+    });
                 //t.buttons().container().appendTo('#inventario_wrapper .col-md-6:eq(0)');   
     });
   function obtenerDato(id){

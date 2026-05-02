@@ -1,5 +1,5 @@
 module.exports.policies = {
-  "*": ["isAuthenticated", "hasPermission", "auditMiddleware","singleSession",'loadOficinas'],
+  "*": ["isAuthenticated",'loadOficinas', "hasPermission", "auditMiddleware","singleSession"],
 
   AuthController: {
     "*": true,

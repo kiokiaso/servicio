@@ -14,35 +14,29 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
-
-/*io.socket.on('nuevo_mensaje', function(data) {
-    if (chatConId !== data.de) {
-        const nombreRemitente = data.nombreDe || 'Usuario'; 
-        abrirChat(data.de, nombreRemitente);
-    } else {
-        dibujarMensajeEnVentana(data.de,data.texto, 'recibido');
-    }
-});*/
 io.socket.on('nuevo_mensaje', function(data) {
     const userId = data.de;
     const nombreRemitente = data.nombreDe || 'Usuario';
 
-    // 1. Si la ventana NO existe, la creamos
+    const selector = `#content-${userId}`;
+
     if ($(`#chat-${userId}`).length === 0) {
-        abrirChat(userId, nombreRemitente);
+        abrirChat(userId, nombreRemitente, false);
     } else {
-        // Si existe pero estaba minimizada o oculta, la mostramos
-        $(`#chat-${userId}`).show().removeClass('minimized');
+        const chat = $(`#chat-${userId}`);
+
+        // 👇 solo mostrar si NO está minimizado
+        if (!chat.hasClass('minimized')) {
+            chat.show();
+        }
     }
 
-    // 2. IMPORTANTE: Agregamos un pequeño delay para asegurar que el DOM 
-    // se haya renderizado si la ventana es nueva, y dibujamos.
-    setTimeout(() => {
-        dibujarMensajeEnVentana(userId, data.texto, 'recibido');
-    }, 100);
+    esperarElemento(selector, () => {
+        setTimeout(() => {
+                dibujarMensajeEnVentana(userId, data.texto, 'recibido');
+            }, 200);
+    });
 });
-
-// Escuchar cambios de usuarios conectados
 io.socket.on('usuario_conectado', function(data) {
   actualizarListaUsuarios();
 });
@@ -53,6 +47,7 @@ io.socket.on('usuario_desconectado', function(data) {
 
 function actualizarListaUsuarios() {
   $.get('/usuarios/conectados', function(usuarios) {
+    $('#contadorUsuarios').text(usuarios.length);
     let html = '';
     usuarios.forEach(u => {
       // Determinamos el color del punto basado en el campo 'online'
@@ -69,16 +64,331 @@ function actualizarListaUsuarios() {
     $('#userListContainer').html(html);
   });
 }
+function toggleListaContactos() {
+    const lista = $('#userListContainer');
+    const visible = lista.is(':visible');
 
-// Al cargar la página, restaurar chats abiertos
+    if (visible) {
+        lista.slideUp(150);
+        localStorage.setItem('contactosVisible', 'false');
+    } else {
+        lista.slideDown(150);
+        localStorage.setItem('contactosVisible', 'true');
+    }
+}
+
 $(document).ready(function() {
     restaurarChats();
-});
+    const visible = localStorage.getItem('contactosVisible');
 
-function abrirChat(userId, userName) {
+    if (visible === 'true') {
+        $('#userListContainer').show();
+    } else {
+        $('#userListContainer').hide();
+    }
+});
+function esperarElemento(selector, callback) {
+    const elemento = document.querySelector(selector);
+
+    if (elemento) {
+        callback(elemento);
+        return;
+    }
+
+    const observer = new MutationObserver(() => {
+        const el = document.querySelector(selector);
+        if (el) {
+            observer.disconnect();
+            callback(el);
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+function guardarEstadoChat(id, name, minimized = false) {
+    let chats = JSON.parse(localStorage.getItem('chatsEstado') || '[]');
+
+    const index = chats.findIndex(c => String(c.id) === String(id));
+
+    if (index >= 0) {
+        chats[index].minimized = minimized;
+    } else {
+        chats.push({ id, name, minimized });
+    }
+
+    localStorage.setItem('chatsEstado', JSON.stringify(chats));
+}
+function abrirChat(userId, userName, minimized = false) {
+    userId = String(userId).trim();
+    const chat = document.getElementById(`chat-${userId}`);
+    if (chat && chat.querySelector(`#content-${userId}`)) {
+        if (!$(chat).hasClass('minimized')) {
+            $(chat).show();
+        }
+        guardarEstadoChat(userId, userName, minimized);
+        return;
+    }
+
+    const chatHtml = `
+    <div id="chat-${userId}" class="card shadow-lg chat-window">
+        <div class="card-header bg-primary text-white d-flex align-items-center" style="padding: 5px 10px;">
+            <!-- flex-grow-1 hace que el nombre ocupe todo el espacio disponible, empujando lo demás a la derecha -->
+            <strong class="text-truncate flex-grow-1" style="max-width: 150px;">
+                ${userName}
+            </strong>
+            
+            <div class="chat-controls d-flex align-items-center">
+                <button class="btn btn-sm text-white p-1 ml-1" onclick="toggleChat('${userId}')" style="background: transparent; border: none;">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="btn btn-sm text-white p-1 ml-1" onclick="cerrarChat('${userId}')" style="background: transparent; border: none; font-size: 1.2rem; line-height: 1;">
+                    &times;
+                </button>
+            </div>
+        </div>
+        <div class="chat-body">
+            <div class="chat-history-area" id="content-${userId}"></div>
+            <div class="card-footer p-2 bg-white">
+                <input type="text" class="form-control form-control-sm" 
+                       placeholder="Escribe..." onkeypress="enviarMensaje(event, '${userId}')">
+            </div>
+        </div>
+    </div>`;
+    //console.log("Container existe:", $('.chat-bar-container').length);
+   // console.log("HTML generado:", chatHtml);
+    $('.chat-bar-container').prepend(chatHtml);
+
+    if (minimized) {
+        $(`#chat-${userId}`).addClass('minimized');
+    }
+    setTimeout(() => {
+        if (minimized === true) {
+            $(`#chat-${userId}`).addClass('minimized');
+        }
+    }, 0);
+
+    guardarEstadoChat(userId, userName, true);
+
+    // 👇 ya no importa timing
+    cargarHistorial(userId);
+}
+
+function cargarHistorial(userId) {
+    const selector = `#content-${userId}`;
+
+    esperarElemento(selector, (containerEl) => {
+        const container = $(containerEl);
+
+        container.html('<small class="text-muted">Cargando...</small>');
+
+        io.socket.get(`/chat/historial/${userId}`, function(mensajes, jwr) {
+
+            if (jwr.statusCode !== 200) {
+                container.html('<small class="text-danger">Error al cargar</small>');
+                return;
+            }
+
+            container.html('');
+
+            if (Array.isArray(mensajes)) {
+                let miId = document.body.getAttribute('data-my-id');
+
+                mensajes.forEach(m => {
+                    let tipo = (m.de == miId) ? 'enviado' : 'recibido';
+                    container.append(`<div class="msg-bubble ${tipo === 'enviado' ? 'msg-enviado' : 'msg-recibido'}">${m.texto}</div>`);
+                });
+
+                setTimeout(() => {
+                    const el = container[0];
+                    if (el) {
+                        el.scrollTop = el.scrollHeight;
+                    }
+                }, 300);
+            }
+        });
+    });
+}
+function cerrarChat(userId) {
+    $(`#chat-${userId}`).remove();
+
+    let chats = JSON.parse(localStorage.getItem('chatsEstado') || '[]');
+    chats = chats.filter(c => String(c.id) !== String(userId));
+
+    localStorage.setItem('chatsEstado', JSON.stringify(chats));
+}
+
+function removerChatDeStorage(id) {
+    let chatsActivos = JSON.parse(localStorage.getItem('chatsActivos') || '[]');
+    chatsActivos = chatsActivos.filter(c => c.id !== id);
+    localStorage.setItem('chatsActivos', JSON.stringify(chatsActivos));
+}
+function restaurarChats() {
+    const chats = JSON.parse(localStorage.getItem('chatsEstado') || '[]');
+
+    chats.forEach(chat => {
+        abrirChat(chat.id, chat.name, chat.minimized);
+    });
+}
+
+function enviarMensaje(event, userId) {
+    // Verificamos si la tecla presionada es Enter (código 13)
+    if (event.which === 13 || event.keyCode === 13) {
+        const input = $(event.target);
+        const texto = input.val().trim();
+        if (texto !== "") {
+            chatConId=userId
+            // Enviamos el mensaje al servidor
+            io.socket.post('/chat/enviar', { para: userId, texto: texto }, (data, jwr) => {
+                if (jwr.statusCode === 200) {
+                    // Pintamos el mensaje en la ventana correcta
+                    dibujarMensajeEnVentana(userId, texto, 'enviado');
+                    input.val(''); // Limpiamos el input
+                } else {
+                    console.error("Error al enviar mensaje", data);
+                }
+            });
+        }
+    }
+}
+function dibujarMensajeEnVentana(userId, texto, tipo) {
+    const container = $(`#content-${userId}`);
+    const el = container[0]; 
+    if (container.length === 0|| !container[0]) return;
+
+    const isAtBottom = container.scrollTop() + container.innerHeight() >= container[0].scrollHeight - 20;
+
+    const clase = tipo === 'enviado' ? 'msg-enviado' : 'msg-recibido';
+    container.append(`<div class="msg-bubble ${clase}">${texto}</div>`);
+
+    setTimeout(() => {
+        el.scrollTop = el.scrollHeight;
+    }, 50);
+}
+function toggleChat(userId) {
+    const chat = $(`#chat-${userId}`);
+    chat.toggleClass('minimized');
+
+    let minimized = chat.hasClass('minimized');
+
+    let chats = JSON.parse(localStorage.getItem('chatsEstado') || '[]');
+    chats = chats.map(c => {
+        if (String(c.id) === String(userId)) {
+            c.minimized = minimized;
+        }
+        return c;
+    });
+
+    localStorage.setItem('chatsEstado', JSON.stringify(chats));
+}
+
+/*io.socket.on('nuevo_mensaje', function(data) {
+    if (chatConId !== data.de) {
+        const nombreRemitente = data.nombreDe || 'Usuario'; 
+        abrirChat(data.de, nombreRemitente);
+    } else {
+        dibujarMensajeEnVentana(data.de,data.texto, 'recibido');
+    }
+});*/
+/* sin probario.socket.on('nuevo_mensaje', function(data) {
+    const userId = data.de;
+    const nombreRemitente = data.nombreDe || 'Usuario';
+
+    let chatExiste = $(`#chat-${userId}`).length > 0;
+
+    if (!chatExiste) {
+        abrirChat(userId, nombreRemitente, false);
+
+        // 👇 IMPORTANTE: esperar a que se cargue historial
+        setTimeout(() => {
+            dibujarMensajeEnVentana(userId, data.texto, 'recibido');
+        }, 300);
+
+    } else {
+        $(`#chat-${userId}`).show().removeClass('minimized');
+        dibujarMensajeEnVentana(userId, data.texto, 'recibido');
+    }
+});*/
+/* más reciente io.socket.on('nuevo_mensaje', function(data) {
+    const userId = data.de;
+    const nombreRemitente = data.nombreDe || 'Usuario';
+    console.log("Mensaje recibido")
+   
+    if ($(`#chat-${userId}`).length === 0) {
+        abrirChat(userId, nombreRemitente,false);
+    } else {
+        $(`#chat-${userId}`).show().removeClass('minimized');
+    }
+    setTimeout(() => {
+        dibujarMensajeEnVentana(userId, data.texto, 'recibido');
+    }, 100);
+});*/
+
+// Escuchar cambios de usuarios conectados
+/*function cerrarChat(userId) {
+    $(`#chat-${userId}`).remove();
+    removerChatDeStorage(userId);
+
+    let cerrados = JSON.parse(localStorage.getItem('chatsCerrados') || '[]');
+    if (!cerrados.includes(userId)) {
+        cerrados.push(userId);
+        localStorage.setItem('chatsCerrados', JSON.stringify(cerrados));
+    }
+}*/
+
+// PERSISTENCIA: Guardar en LocalStorage
+/*function guardarEstadoChat(id, name) {
+    let chatsActivos = JSON.parse(localStorage.getItem('chatsActivos') || '[]');
+    if (!chatsActivos.find(c => c.id === id)) {
+        chatsActivos.push({ id, name });
+        localStorage.setItem('chatsActivos', JSON.stringify(chatsActivos));
+    }
+}*/
+
+/*function restaurarChats() {
+    const chatsActivos = JSON.parse(localStorage.getItem('chatsActivos') || '[]');
+    const cerrados = JSON.parse(localStorage.getItem('chatsCerrados') || '[]');
+    console.log("Activos",chatsActivos,"Cerrados",cerrados)
+    chatsActivos.forEach(chat => {
+        //abrirChat(chat.id, chat.name);
+        console.log("Entra antes de la comparación",cerrados.includes(chat.id))
+        if (!cerrados.map(String).includes(String(chat.id))) {
+            console.log("Entra")
+            abrirChat(chat.id, chat.name);
+        }
+    });
+}*/
+/*function abrirChat(userId, userName, minimized = false) {
+
+    if ($(`#chat-${userId}`).length > 0) {
+        $(`#chat-${userId}`).show().removeClass('minimized');
+        guardarEstadoChat(userId, userName, false);
+        return;
+    }
+
+    const chatHtml = `...`; // tu template igual
+
+    $('.chat-bar-container').prepend(chatHtml);
+
+    // 👇 aplicar minimized correctamente
+    if (minimized) {
+        $(`#chat-${userId}`).addClass('minimized');
+    }
+
+    guardarEstadoChat(userId, userName, minimized);
+
+    // 👇 cargar historial SIEMPRE
+    cargarHistorial(userId);
+}*/
+/*function abrirChat(userId, userName) {
+    
+
     // Si ya existe la ventana, solo la mostramos
     if ($(`#chat-${userId}`).length > 0) {
         $(`#chat-${userId}`).show().removeClass('minimized');
+        guardarEstadoChat(userId, userName, false);
         return;
     }
 
@@ -110,62 +420,80 @@ function abrirChat(userId, userName) {
     </div>`;
 
     $('.chat-bar-container').prepend(chatHtml);
-    guardarEstadoChat(userId, userName);
-}
-
-function toggleChat(userId) {
-    $(`#chat-${userId}`).toggleClass('minimized');
-    // Actualizar icono si deseas
-}
-
-function cerrarChat(userId) {
-    $(`#chat-${userId}`).remove();
-    removerChatDeStorage(userId);
-}
-
-// PERSISTENCIA: Guardar en LocalStorage
-function guardarEstadoChat(id, name) {
-    let chatsActivos = JSON.parse(localStorage.getItem('chatsActivos') || '[]');
-    if (!chatsActivos.find(c => c.id === id)) {
-        chatsActivos.push({ id, name });
-        localStorage.setItem('chatsActivos', JSON.stringify(chatsActivos));
+    //guardarEstadoChat(userId, userName);
+    guardarEstadoChat(userId, userName, minimized);
+    if (!historialCargado[userId]) {
+        cargarHistorial(userId);
+        historialCargado[userId] = true;
     }
-}
+}*/
 
-function removerChatDeStorage(id) {
-    let chatsActivos = JSON.parse(localStorage.getItem('chatsActivos') || '[]');
-    chatsActivos = chatsActivos.filter(c => c.id !== id);
-    localStorage.setItem('chatsActivos', JSON.stringify(chatsActivos));
-}
+/*sin probarfunction cargarHistorial(userId) {
+    const container = $(`#content-${userId}`);
+    if (container.length === 0) {
+        console.warn("Contenedor aún no existe:", userId);
+        return;
+    }
+    
+    container.html('<small class="text-muted">Cargando...</small>');
 
-function restaurarChats() {
-    const chatsActivos = JSON.parse(localStorage.getItem('chatsActivos') || '[]');
-    chatsActivos.forEach(chat => {
-        abrirChat(chat.id, chat.name);
+    io.socket.get(`/chat/historial/${userId}`, function(mensajes, jwr) {
+
+        if (jwr.statusCode !== 200) {
+            container.html('<small class="text-danger">Error al cargar</small>');
+            return;
+        }
+
+        container.html('');
+
+        if (Array.isArray(mensajes)) {
+            let miId = document.body.getAttribute('data-my-id');
+
+            mensajes.forEach(m => {
+                let tipo = (m.de == miId) ? 'enviado' : 'recibido';
+                container.append(`<div class="msg-bubble ${tipo === 'enviado' ? 'msg-enviado' : 'msg-recibido'}">${m.texto}</div>`);
+            });
+
+            // 👇 bajar scroll al final SIEMPRE en historial
+            if (container.length > 0 && container[0]) {
+                container.scrollTop(container[0].scrollHeight);
+            }
+        }
     });
-}
+}*/
+/*function cargarHistorial(userId) {
+    const container = $(`#content-${userId}`);
+    
+    container.html('<small class="text-muted">Cargando...</small>');
 
-function enviarMensaje(event, userId) {
-    // Verificamos si la tecla presionada es Enter (código 13)
-    if (event.which === 13 || event.keyCode === 13) {
-        const input = $(event.target);
-        const texto = input.val().trim();
-        if (texto !== "") {
-            chatConId=userId
-            // Enviamos el mensaje al servidor
-            io.socket.post('/chat/enviar', { para: userId, texto: texto }, (data, jwr) => {
-                if (jwr.statusCode === 200) {
-                    // Pintamos el mensaje en la ventana correcta
-                    dibujarMensajeEnVentana(userId, texto, 'enviado');
-                    input.val(''); // Limpiamos el input
-                } else {
-                    console.error("Error al enviar mensaje", data);
-                }
+    io.socket.get(`/chat/historial/${userId}`, function(mensajes, jwr) {
+
+        if (jwr.statusCode !== 200) {
+            container.html('<small class="text-danger">Error al cargar</small>');
+            return;
+        }
+
+        container.html('');
+
+        if (Array.isArray(mensajes)) {
+            mensajes.forEach(m => {
+
+                // 👇 necesitas tu ID actual (ajústalo según tu app)
+                let miId = document.body.getAttribute('data-my-id');
+
+                let tipo = (m.de == miId) ? 'enviado' : 'recibido';
+
+                dibujarMensajeEnVentana(userId, m.texto, tipo);
             });
         }
-    }
-}
-function dibujarMensajeEnVentana(userId, texto, tipo) {
+    });
+}*/
+
+/*function toggleChat(userId) {
+    $(`#chat-${userId}`).toggleClass('minimized');
+    // Actualizar icono si deseas
+}*/
+/*function dibujarMensajeEnVentana(userId, texto, tipo) {
     const clase = tipo === 'enviado' ? 'msg-enviado' : 'msg-recibido';
     const container = $(`#content-${userId}`);
     
@@ -179,7 +507,7 @@ function dibujarMensajeEnVentana(userId, texto, tipo) {
     }
     // Auto-scroll al final del contenedor de esa ventana específica
     //container.scrollTop(container[0].scrollHeight);
-}
+}*/
 
 
 // Escuchar nuevos mensajes

@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { session } = require('passport');
 function mesObtener(mes){
     let cadena="";

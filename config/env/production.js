@@ -4,6 +4,7 @@ module.exports = {
     default: {
       adapter: 'sails-mysql',
       url: 'mysql://root:root@localhost:8889/servicio',
+      //url: 'mysql://servicio:X&k_gfBS7vq8hl8s@localhost:3306/servicio',
     },
   },
   models: {
@@ -50,4 +51,6 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCfwOOK0zRZnloj133m7yc0u2d02IOXy1EKnQGHwXfy
 
 
 X&k_gfBS7vq8hl8s
+
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 */

@@ -8,112 +8,89 @@
     <%/* <meta name="robots" content="noindex"> */%>
     <%- partial('../partials/estilos')%>
     <style>
-      .chat-container { position: fixed; bottom: 0; right: 20px; z-index: 1000; display: flex; align-items: flex-end; }
-      .chat-list-card { width: 250px; margin-left: 10px; }
-      .chat-window { width: 300px; height: 400px; margin-left: 10px; display: none; flex-direction: column; }
-      .messages-area { flex-grow: 1; overflow-y: auto; background: #f9f9f9; padding: 10px; }
-      .online-dot { height: 10px; width: 10px; background-color: #28a745; border-radius: 50%; display: inline-block; }
-      /* Contenedor principal 
-  .chat-bar-container {
-    position: fixed;
-    bottom: 0;
-    right: 20px;
-    display: flex;
-    align-items: flex-end;
-    z-index: 9999;
-    pointer-events: none; //Permite clickear lo que está detrás si no hay ventanas 
-  }*/
-  /* Contenedor principal de todas las ventanas */
-.chat-bar-container {
-    position: fixed;
-    bottom: 0;
-    right: 20px;
-    display: flex;
-    align-items: flex-end;
-    z-index: 9999;
-    gap: 10px;
-}
+      .chat-bar-container {
+          position: fixed;
+          bottom: 0;
+          right: 20px;
+          display: flex;
+          align-items: flex-end;
+          gap: 10px;
+          z-index: 9999;
+      }
 
-/* Estilo de la ventana de chat */
-.chat-window {
-    width: 300px;
-    transition: all 0.3s ease;
-    border-radius: 10px 10px 0 0 !important;
-}
+      /* Ventana de chat */
+      .chat-window {
+          width: 280px;
+          height: 400px;
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 0 !important;
+      }
 
-/* Estado minimizado */
-.chat-window.minimized {
-    height: 45px;
-    overflow: hidden;
-}
+      /* Estado minimizado */
+      .chat-window.minimized {
+          height: 45px;
+          overflow: hidden;
+      }
 
+      /* Header */
+      .chat-controls button {
+          background: none;
+          border: none;
+          color: white;
+          cursor: pointer;
+      }
 
-.chat-controls button {
-    background: none;
-    border: none;
-    color: white;
-    padding: 0 5px;
-    cursor: pointer;
-    font-size: 14px;
-}
+      /* Cuerpo del chat */
+      .chat-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden; /* 👈 importante */
+      }
 
-  .chat-bar-container > * { pointer-events: auto; }
+      /* Área de mensajes */
+      .chat-history-area {
+          flex: 1;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          padding: 10px;
+          background: #fff;
+      }
 
-  /* Burbujas de Mensaje */
-  .msg-bubble {
-    padding: 8px 12px;
-    border-radius: 18px;
-    margin-bottom: 5px;
-    max-width: 85%;
-    clear: both;
-    position: relative;
-    font-size: 13px;
-  }
+      /* Input */
+      .chat-body .card-footer {
+          flex-shrink: 0;
+          background: #fff;
+      }
 
-  .msg-enviado {
-    background-color: #0084ff;
-    color: white;
-    float: right;
-    border-bottom-right-radius: 4px;
-  }
+      /* Burbujas */
+      .msg-bubble {
+          padding: 8px 12px;
+          border-radius: 18px;
+          margin: 5px 8px;
+          max-width: 75%;
+          font-size: 13px;
+      }
 
-  .msg-recibido {
-    background-color: #e4e6eb;
-    color: black;
-    float: left;
-    border-bottom-left-radius: 4px;
-  }
-/*
-  .chat-history-area {
-    height: 300px;
-    overflow-y: auto;
-    padding: 15px;
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-  }*/
-  .chat-history-area {
-    height: 300px;
-    overflow-y: auto;
-    padding: 10px;
-    background: #f8f9fa;
-}
+      /* Enviado */
+      .msg-enviado {
+          background-color: #0084ff;
+          color: white;
+          align-self: flex-end;
+      }
 
-
-  /* Punto Online */
-  .status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 5px;
-  }
-  .status-online { background-color: #31a24c; }
-  .status-offline { background-color: #bdc3c7; }
+      /* Recibido */
+      .msg-recibido {
+          background-color: #e4e6eb;
+          color: black;
+          align-self: flex-start;
+      }
     </style>
   </head>
 
-  <body class="hold-transition sidebar-mini layout-fixed">
+  <body data-my-id="<%=session.usuario.id%>" class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
       <div id="headerNav">
         <%- partial('../partials/headerNav')%>
@@ -170,7 +147,15 @@
     </div>
     Fin chat-->
     <div class="chat-bar-container">
-      <div class="card shadow-sm mb-0" style="width: 250px; border-radius: 10px 10px 0 0;">
+      <div class="card shadow-sm mb-0 chat-contact-bar" style="width: 250px; border-radius: 10px 10px 0 0;">
+        <div class="card-header bg-dark text-white font-weight-bold p-2 text-center" style="cursor: pointer" onclick="toggleListaContactos()">
+            <i class="fas fa-circle text-success small mr-1"></i>
+            Contactos (<span id="contadorUsuarios">0</span>)
+        </div>
+        <div id="userListContainer" class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto; display: none;">
+        </div>
+    </div>
+      <!--<div class="card shadow-sm mb-0" style="width: 250px; border-radius: 10px 10px 0 0;">
           <div class="card-header bg-dark text-white font-weight-bold p-2 text-center" 
               style="cursor: pointer" onclick="$('#userListContainer').toggle()">
               <i class="fas fa-circle text-success small mr-1"></i> Contactos
@@ -178,7 +163,7 @@
           <div id="userListContainer" class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
               
           </div>
-      </div>
+      </div>-->
   </div>
   </body>
 </html>

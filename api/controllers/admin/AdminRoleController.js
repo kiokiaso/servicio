@@ -42,7 +42,27 @@ module.exports = {
       res.status(400).send({ error: "No se ha encontrado el contacto" });
     }
   },
-  permisos:async function(req,res){
+  permisos: async function (req, res) {
+    let role = await Role.findOne({ id: req.params.id }).populate('permisos');
+    let permisoTmp = await Permission.find({ activo: 1 });
+    const idPermiso = new Set(role.permisos.map(p => p.id));
+    const tipos = [...new Set(permisoTmp.map(p => p.tipo))];
+    const permisosAgrupados = {};
+    tipos.forEach(tipo => {
+        permisosAgrupados[tipo] = permisoTmp
+            .filter(p => p.tipo === tipo)
+            .map(p => ({
+                ...p,
+                checked: idPermiso.has(p.id)
+            }));
+    });
+    console.log(permisosAgrupados)
+    return res.view("pages/sistema/roles/permisos", {
+        role,
+        permisosAgrupados
+    });
+},
+  /*permisos:async function(req,res){
     let role=await Role.findOne({id:req.params.id}).populate('permisos');
     let permisoTmp=await Permission.find({activo:1})
     const idPermiso=new Set(role.permisos.map(p=>p.id))
@@ -55,7 +75,7 @@ module.exports = {
     return res.view("pages/sistema/roles/permisos", {
       role,permisos
     });
-  },
+  },*/
   guardarPermisos:async function(req,res){
     const roleId=req.body.idRole;
     const nuevosPermisos=req.body.permiso||[];

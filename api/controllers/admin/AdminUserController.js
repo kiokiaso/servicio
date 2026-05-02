@@ -15,11 +15,81 @@ module.exports = {
   },
   crear: async function (req, res) {
     let datos=req.body
+    let contrasena=req.body.password
     let passwordHash = await bcrypt.hash(datos.password, 10);
     datos.password=passwordHash
     let usuario = await User.create(datos).fetch();
     let ofi=usuario.oficinas;
     await User.replaceCollection(usuario.id,'accesooficinas').members(ofi)
+    contenido = `
+<html>
+  <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding:40px 0;">
+      <tr>
+        <td align="center">
+
+          <!-- Contenedor principal -->
+          <table width="600" cellpadding="0" cellspacing="0" 
+                 style="background:#ffffff; border-radius:10px; overflow:hidden;">
+
+            <!-- Header -->
+            <tr>
+              <td style="background:#0d6efd; color:#ffffff; padding:20px; text-align:center;">
+                <h2 style="margin:0;">Sistema de Servicio EXI</h2>
+              </td>
+            </tr>
+
+            <!-- Contenido -->
+            <tr>
+              <td style="padding:30px; color:#333333;">
+
+                <h3 style="margin-top:0;">Buen día, ${req.body.nombre}</h3>
+
+                <p style="font-size:15px; line-height:1.6;">
+                  Se ha creado tu acceso al sistema de servicio. A continuación tus credenciales:
+                </p>
+
+                <table width="100%" cellpadding="8" style="background:#f9f9f9; border-radius:8px; margin-top:20px;">
+                  <tr>
+                    <td><strong>Ruta del sistema:</strong></td>
+                    <td><a href="https://servicio.exi.com.mx" target="_blank">https://servicio.exi.com.mx</a></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Usuario:</strong></td>
+                    <td>${req.body.email}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Contraseña:</strong></td>
+                    <td>${contrasena}</td>
+                  </tr>
+                </table>
+
+                <p style="margin-top:25px; font-size:13px; color:#777;">
+                  Te recomendamos cambiar tu contraseña al iniciar sesión por primera vez.
+                </p>
+
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background:#f1f1f1; text-align:center; padding:15px; font-size:12px; color:#888;">
+                Este es un mensaje automático generado por el Sistema de Servicio Técnico de <strong>Grupo Exi</strong>.<br>
+            © <%= new Date().getFullYear() %> Todos los derechos reservados.
+              </td>
+            </tr>
+
+          </table>
+
+        </td>
+      </tr>
+    </table>
+
+  </body>
+</html>
+`;
+            var mailer = await sails.helpers.notificar.with({ contenido: contenido,correos:req.body.email, subject: 'Accesos a sistema de servicio', usuarioId: req.session.usuario.id });
     return res.redirect("/admin/usuarios");
   },
   actualizar:async function(req,res){

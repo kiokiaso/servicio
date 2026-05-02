@@ -21,23 +21,53 @@
             <%=msg%>
         </div>
     <% }) %>
-    <section class="content">
-        <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">No tienes autorización</h3>
+    <section class="content d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="card shadow-lg border-0" style="max-width: 600px; border-radius: 15px;">
+        <!-- Cabecera con color de advertencia suave -->
+        <div class="card-header bg-warning text-dark text-center py-4" style="border-radius: 15px 15px 0 0;">
+            <i class="fas fa-exclamation-shield fa-3x mb-3"></i>
+            <h3 class="card-title d-block float-none" style="font-weight: 700; font-size: 1.5rem;">
+                Acceso Restringido
+            </h3>
+        </div>
+
+        <div class="card-body p-5 text-center">
+            <p class="text-muted mb-4">
+                Hola <strong><%= session.usuario.nombre %></strong>, hemos detectado un intento de acceso no autorizado.
+            </p>
+            
+            <div class="alert alert-light border mb-4 text-left" style="background-color: #f8f9fa;">
+                <p class="small mb-2"><strong>Detalles de la solicitud:</strong></p>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Ruta:</span>
+                    <code class="text-danger"><%= ruta %></code>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Método:</span>
+                    <span class="badge badge-secondary"><%= metodo %></span>
+                </div>
             </div>
-            <!-- /.card-header -->
-            <!-- /.card-header -->
-            <div class="card-body p-4">
-                <%=session.usuario.nombre%> no tienes permiso para entrar a la ruta solicitada <b>"<%=ruta%>"</b> con el método <b>"<%=metodo%>"</b>, por favor, si es algo que tu puesto debe tener, ponte en contacto con el administrador del sistema por teams y enviale este mensaje, para que te sea otorgado el permiso o te expliquen porque no tienes acceso.
-            </div>
-              <!-- /.card-body -->
-              <div class="card-footer">
-                  
-              </div>
-            </div>
-          <!-- /.card -->
-    </section>
+
+            <p class="card-text text-secondary">
+                Si consideras que tu puesto requiere este permiso, por favor contacta al <strong>Administrador del Sistema</strong> vía <b>Microsoft Teams</b>. 
+                <br><br>
+                <small class="text-muted italic">Copia y envía este mensaje para agilizar tu solicitud.</small>
+            </p>
+        </div>
+
+        <div class="card-footer bg-white border-0 pb-4 text-center">
+            <a href="javascript:history.back()" class="btn btn-outline-primary rounded-pill px-4">
+                <i class="fas fa-arrow-left mr-2"></i> Volver atrás
+            </a>
+
+            <!-- Botón con Deep Link -->
+            <a href="msteams://teams.microsoft.com/l/chat/0/0?users=admin@tuempresa.com&message=Error de Acceso: <%= session.usuario.nombre %> no tiene permiso para <%= ruta %>" 
+            class="btn btn-primary rounded-pill px-4 ml-2 shadow-sm">
+                <i class="fab fa-microsoft mr-2"></i> Reportar por Teams
+            </a>
+        </div>
+    </div>
+</section>
 </div>
 
 

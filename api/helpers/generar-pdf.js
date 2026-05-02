@@ -26,8 +26,19 @@ module.exports = {
     try {
       // Lanzar el navegador en modo "headless" (sin ventana)
       browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox'], // Necesario para Linux/Heroku
-        headless: "new"
+        headless: true,
+        timeout:60000,
+        dumpio:true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-zygote',
+          '--single-process',        // 👈 ESTE ES CLAVE
+          '--no-first-run',
+          '--disable-extensions'
+        ]
       });
 
       const page = await browser.newPage();

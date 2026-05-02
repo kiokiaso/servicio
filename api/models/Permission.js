@@ -10,22 +10,25 @@ module.exports = {
     nombre: {
       type: "string",
     },
-
     ruta: {
       type: "string",
     },
-/*
-    accion: {
-      type: "string",
-    },*/
     metodo: {
       type: "string",
+    },
+    tipo:{
+      type:'string'
+    },
+    controlador: {
+      type: "string",
+    },
+    accion:{
+      type:'string'
     },
     activo:{
       type:"number",
       defaultsTo:1
     },
-
     roles: {
       collection: "role",
       via: "permisos",

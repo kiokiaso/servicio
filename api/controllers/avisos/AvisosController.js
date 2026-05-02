@@ -1700,7 +1700,8 @@ for (let c of contadores) {
             //Crear materiales y descontar de las existencias
             if(aviso.tipoAviso!=3){
                 let materiales=req.body.materiales
-                if(materiales.length>0){
+                if (materiales && Array.isArray(materiales) && materiales.length > 0) {
+                //if(materiales.length>0){
                     for(let m of materiales){
                         let articulo=await StockUsuario.findOne({articulo:m.id,oficina:req.oficinaElegida.id,usuario:req.session.usuario.id}).populate('articulo').usingConnection(db);
                         await StockUsuario.updateOne({ id: articulo.id }).set({ cantidad: Number(articulo.cantidad) - Number(m.cantidad) }).usingConnection(db);

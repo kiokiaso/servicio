@@ -150,9 +150,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-                <input type="text" name="idAviso" id="idAviso">
+                <input type="text" name="idAviso" id="idAviso" class="d-none">
                 <button type="submit" class="btn btn-primary" onclick="agregarEquipoAviso()">Modificar</button>
-                <input type="text" name="redirect" id="redirect" value="No">
+                <input type="text" name="redirect" id="redirect" value="No" class="d-none">
             </div>
         </div>
     </div>
@@ -197,6 +197,11 @@
                         document.getElementById('txtClienteModal').innerHTML=res.aviso.cliente.razonsocial
                         document.getElementById('ingeniero').value=res.aviso.atendidoPor,
                         document.getElementById('redirect').value='Si'
+                        const fecha = res.aviso.fechaAtencion;
+                        const fechaFin = res.aviso.fechaFin;
+                         document.getElementById('manualFechaInicio').value = formatearFecha(fecha);
+                         document.getElementById('manualFechaFin').value = formatearFecha(fechaFin);
+                        //document.getElementById('manualFechaInicio').value=res.aviso.fechaAtencion
                     }
                     
             }).fail(function (res) {
@@ -205,6 +210,16 @@
             
         }
     });
+    function formatearFecha(fecha){
+        const dt = new Date(fecha);
+        const formatted =
+            dt.getFullYear() + "-" +
+            String(dt.getMonth() + 1).padStart(2, '0') + "-" +
+            String(dt.getDate()).padStart(2, '0') + "T" +
+            String(dt.getHours()).padStart(2, '0') + ":" +
+            String(dt.getMinutes()).padStart(2, '0');
+        return formatted
+    }
 document.addEventListener('DOMContentLoaded', function() {
     const calendarEl = document.getElementById('calendar');
     const filtro = document.getElementById('filtroIngeniero');
@@ -294,12 +309,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire('Aviso Finalizado', 'No se puede editar la programación de un aviso cerrado.', 'info');
                 return;
             }
+            console.log("Datos del evento",info.event.startStr)
             // Aquí puedes llamar a tu modal de edición si lo deseas
             $('#programacion').modal('show');
             document.getElementById('idAviso').value=info.event.id
             document.getElementById('txtFolioModal').innerHTML=info.event.extendedProps.folio
             document.getElementById('txtClienteModal').innerHTML=info.event.title
             document.getElementById('ingeniero').value=info.event.extendedProps.ingenieroId
+            document.getElementById('manualFechaInicio').value = formatearFecha(info.event.startStr);
+            document.getElementById('manualFechaFin').value = formatearFecha(info.event.endStr);
             //window.location.href = '/avisos/' + info.event.id;
         },
 

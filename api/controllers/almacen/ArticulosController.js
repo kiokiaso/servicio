@@ -7,7 +7,7 @@ module.exports = {
         return res.view("pages/almacen/articulos",{oficinas:usuarios.accesooficinas});
     },
     mostrar: async function (req, res) {
-        let articulo=await Articulos.findOne({id:req.params.id}).populate('existenciasOficinas',{where:{oficina:req.oficinaElegida.id}}).populate('existenciasUsuarios');
+        let articulo=await Articulos.findOne({id:req.params.id}).populate('existenciasOficinas',{where:{oficina:req.oficinaElegida.id}}).populate('existenciasUsuarios',{oficina:req.oficinaElegida.id});
         articulo.existenciasOficinas = await Promise.all(
             articulo.existenciasOficinas.map(async (eo) => {
                 eo.oficina = await Oficinas.findOne({ id: eo.oficina });

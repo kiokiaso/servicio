@@ -286,4 +286,5 @@ module.exports.routes = {
   'GET /ping': { response: 'ok' },
   //Autorizaciones
   'GET /non-authorization':'AuthController.nonAuthorization',//*
+  'GET /rutas/permisos':'chat/ChatController.crearPermisos'
 };
